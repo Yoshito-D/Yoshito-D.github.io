@@ -6,3 +6,5 @@
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.project-link{transition:none}}
 
 .all-works-link{display:inline-block;margin-top:25px;font-size:13px;color:var(--accent)}
+
+.project-link .empty-media{position:relative}.preview-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;pointer-events:none}.empty-media.is-previewing .preview-video{opacity:1}
