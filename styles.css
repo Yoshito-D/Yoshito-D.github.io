@@ -42,3 +42,24 @@
   .preview-video{transition:opacity .22s ease}
   .project-link:focus-visible .empty-media>img{transform:scale(1.035)}
 }
+
+/* Work metadata and filters share the existing palette. */
+[hidden]{display:none!important}
+.project-meta{padding:0 26px 24px}
+.project-tags{display:flex;flex-wrap:wrap;gap:8px;margin:0;padding:0;list-style:none}
+.project-tags li{font-size:11px;line-height:1.6;color:var(--accent);border:1px solid var(--line);border-radius:20px;padding:4px 11px}
+.achievement-list{list-style:none;margin:14px 0 0;padding:0;color:var(--accent);font-size:12px;line-height:1.8}
+.achievement-list li+li{margin-top:8px}
+.detail-tags{max-width:850px;margin:-10px 0 26px}
+.detail-section .achievement-list{font-size:14px}
+.work-filters{display:flex;flex-wrap:wrap;gap:18px;align-items:end;padding:24px;border:1px solid var(--line);border-radius:4px;background:var(--panel)}
+.work-filters>div{flex:1;min-width:150px}
+.work-filters label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
+.work-filters select,.work-filters button{font:inherit;font-size:13px;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:4px;padding:10px 12px;min-height:44px}
+.work-filters select{width:100%}
+.work-filters button{cursor:pointer}
+.work-filters button:hover{border-color:var(--accent);color:var(--accent)}
+.work-filters :is(select,button):focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.filter-count{flex-basis:100%;font-size:12px;color:var(--muted)}
+.filter-empty{padding:40px 0;color:var(--muted);font-size:14px}
+@media(max-width:560px){.project-meta{padding:0 22px 20px}.work-filters{padding:18px}.work-filters>div{flex-basis:100%}}
