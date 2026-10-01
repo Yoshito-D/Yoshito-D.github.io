@@ -5,4 +5,4 @@
 @media(max-width:560px){.site-header{height:72px}nav{gap:15px;font-size:10px}.brand{font-size:18px}.profile-section,.featured-grid{grid-template-columns:1fr}.profile-section{padding:40px 0;gap:25px}h1{font-size:32px}.role{margin-top:15px}.section{padding:40px 0}.detail h1{font-size:26px}.project-link h3{font-size:18px}.profile-description{font-size:12px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.project-link{transition:none}}
 
-.all-works-link{display:inline-block;margin-top:25px;font-size:13px;color:var(--accent)}.collection-materials{border-top:1px solid var(--line)}
+.all-works-link{display:inline-block;margin-top:25px;font-size:13px;color:var(--accent)}
