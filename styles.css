@@ -10,3 +10,5 @@
 .project-link .empty-media{position:relative}.preview-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;pointer-events:none}.empty-media.is-previewing .preview-video{opacity:1}
 
 .email-link{color:#8ab8ff;text-decoration:underline;text-underline-offset:3px;overflow-wrap:anywhere}.email-link:hover{color:#bdd6ff}
+
+.profile-section .eyebrow{margin-bottom:20px}.profile-section h1{margin-top:5px}
