@@ -13,4 +13,7 @@
 
 .profile-section .eyebrow{margin-bottom:20px}.profile-section h1{margin-top:5px}
 
-.work-category{margin-top:40px}.work-category+ .work-category{border-top:1px solid var(--line);padding-top:35px}.work-category>h2{font-size:27px}.year-group{margin-top:28px}.year-group>h3{font-size:17px;color:var(--muted);font-weight:500;margin:0 0 18px}.project-link h4{font-size:18px;font-weight:600;padding:18px 22px;line-height:1.6;margin:0}.year-group .featured-grid:has(>.project-card:only-child){max-width:calc(50% - 15px)}@media(max-width:560px){.year-group .featured-grid:has(>.project-card:only-child){max-width:none}}
+.work-category{margin-top:40px}.work-category+ .work-category{border-top:1px solid var(--line);padding-top:35px}.work-category>h2{font-size:27px}.year-group{margin-top:28px}.year-group>h3{font-size:17px;color:var(--muted);font-weight:500;margin:0 0 18px}.project-link h4{font-size:18px;font-weight:600;padding:18px 22px;line-height:1.6;margin:0}.year-group .featured-grid:has(>.project-card:only-child){max-width:calc(50% - 15px);grid-template-columns:1fr}@media(max-width:560px){.year-group .featured-grid:has(>.project-card:only-child){max-width:none}}
+
+/* Shared title spacing for home and categorized project cards. */
+.project-link .project-title{margin:0;padding:22px 26px;font-size:18px;font-weight:600;line-height:1.6}@media(max-width:560px){.project-link .project-title{padding:18px 22px}}
