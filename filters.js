@@ -9,10 +9,14 @@
     const values = new FormData(form);
     let visible = 0;
     for (const card of cards) {
+      const production = values.get('production');
+      const year = values.get('year');
       const dimension = values.get('dimension');
       const genre = values.get('genre');
       const achievement = values.get('achievement');
-      const matches = (!dimension || card.dataset.dimension === dimension)
+      const matches = (!production || card.dataset.production === production)
+        && (!year || card.dataset.year === year)
+        && (!dimension || card.dataset.dimension === dimension)
         && (!genre || card.dataset.genre === genre)
         && (!achievement || (achievement === 'vote' ? card.dataset.achievement !== 'none' : card.dataset.achievement === 'award'));
       card.hidden = !matches;
