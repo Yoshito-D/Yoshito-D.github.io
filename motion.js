@@ -11,7 +11,7 @@
     }
   }, { threshold: 0.08 });
 
-  document.querySelectorAll('.profile-section, .section-heading, .project-card, .year-group > h3, .work-category > h2, .detail > h1, .detail-media, .detail-section')
+  document.querySelectorAll('[data-motion], .site-header, .profile-section, .section-heading, .project-card, .year-group > h3, .work-category > h2, .detail > h1, .detail-media, .detail-section, footer')
     .forEach((element) => observer.observe(element));
 
   preference.addEventListener('change', (event) => {
