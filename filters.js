@@ -1,31 +1,24 @@
-// Static tags and achievements remain available without JavaScript.
+// Tag buttons use OR matching. Content stays visible without JavaScript.
 (() => {
-  const form = document.querySelector('.work-filters');
-  if (!form) return;
+  const filters = document.querySelector('.work-filters');
+  if (!filters) return;
   const cards = [...document.querySelectorAll('.project-card')];
-  const count = form.querySelector('.filter-count');
+  const buttons = [...filters.querySelectorAll('[data-tag]')];
+  const count = filters.querySelector('.filter-count');
+  const reset = filters.querySelector('.filter-reset');
   const empty = document.querySelector('.filter-empty');
+  const selected = new Set();
   const apply = () => {
-    const values = new FormData(form);
     let visible = 0;
     for (const card of cards) {
-      const production = values.get('production');
-      const year = values.get('year');
-      const dimension = values.get('dimension');
-      const genre = values.get('genre');
-      const achievement = values.get('achievement');
-      const matches = (!production || card.dataset.production === production)
-        && (!year || card.dataset.year === year)
-        && (!dimension || card.dataset.dimension === dimension)
-        && (!genre || card.dataset.genre === genre)
-        && (!achievement || (achievement === 'vote' ? card.dataset.achievement !== 'none' : card.dataset.achievement === 'award'));
+      const tags = [...card.querySelectorAll('.project-tags li')].map(tag => tag.textContent.trim());
+      const matches = selected.size === 0 || tags.some(tag => selected.has(tag));
       card.hidden = !matches;
       if (matches) visible++;
     }
     document.querySelectorAll('.year-group, .work-category').forEach(group => {
       group.hidden = ![...group.querySelectorAll('.project-card')].some(card => !card.hidden);
     });
-    // Recalculate stagger positions after a row changes.
     document.querySelectorAll('.featured-grid').forEach(grid => {
       let rowTop;
       let position = 0;
@@ -34,12 +27,18 @@
         card.style.setProperty('--motion-delay', Math.min(position++, 3) * 100 + 'ms');
       });
     });
+    buttons.forEach(button => button.setAttribute('aria-pressed', String(selected.has(button.dataset.tag))));
+    reset.setAttribute('aria-pressed', String(selected.size === 0));
     count.textContent = visible + ' / ' + cards.length + '作品を表示';
     empty.hidden = visible !== 0;
   };
-  form.addEventListener('change', apply);
-  form.addEventListener('submit', event => event.preventDefault());
-  form.addEventListener('reset', () => setTimeout(apply, 0));
+  buttons.forEach(button => button.addEventListener('click', () => {
+    const tag = button.dataset.tag;
+    if (selected.has(tag)) selected.delete(tag);
+    else selected.add(tag);
+    apply();
+  }));
+  reset.addEventListener('click', () => { selected.clear(); apply(); });
   apply();
-  form.hidden = false;
+  filters.hidden = false;
 })();

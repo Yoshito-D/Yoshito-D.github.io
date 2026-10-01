@@ -52,14 +52,18 @@
 .achievement-list li+li{margin-top:8px}
 .detail-tags{max-width:850px;margin:-10px 0 26px}
 .detail-section .achievement-list{font-size:14px}
-.work-filters{display:flex;flex-wrap:wrap;gap:18px;align-items:end;padding:24px;border:1px solid var(--line);border-radius:4px;background:var(--panel)}
-.work-filters>div{flex:1;min-width:150px}
-.work-filters label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
-.work-filters select,.work-filters button{font:inherit;font-size:13px;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:4px;padding:10px 12px;min-height:44px}
-.work-filters select{width:100%}
-.work-filters button{cursor:pointer}
-.work-filters button:hover{border-color:var(--accent);color:var(--accent)}
-.work-filters :is(select,button):focus-visible{outline:2px solid var(--accent);outline-offset:3px}
-.filter-count{flex-basis:100%;font-size:12px;color:var(--muted)}
+
+.work-filters{margin:0 0 30px}
+.filter-help{font-size:12px;color:var(--muted);margin-bottom:14px}
+.filter-tags{display:flex;flex-wrap:wrap;gap:10px}
+.filter-tag,.filter-reset{font:inherit;font-size:12px;line-height:1.6;border:1px solid var(--line);border-radius:24px;background:var(--panel);color:var(--accent);padding:7px 15px;min-height:36px;cursor:pointer}
+.filter-tag:hover,.filter-reset:hover{border-color:var(--accent)}
+.filter-tag[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+.work-filters button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.filter-summary{display:flex;flex-wrap:wrap;align-items:center;gap:16px;margin-top:16px}
+.filter-reset{color:var(--muted);background:transparent}
+.filter-reset[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
+.filter-count{font-size:12px;color:var(--muted)}
 .filter-empty{padding:40px 0;color:var(--muted);font-size:14px}
-@media(max-width:560px){.project-meta{padding:0 22px 20px}.work-filters{padding:18px}.work-filters>div{flex-basis:100%}}
+@media(prefers-reduced-motion:no-preference){.filter-tag,.filter-reset{transition:background-color .2s ease,color .2s ease,border-color .2s ease}}
+@media(max-width:560px){.project-meta{padding:0 22px 20px}}
