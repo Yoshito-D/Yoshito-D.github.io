@@ -8,3 +8,5 @@
 .all-works-link{display:inline-block;margin-top:25px;font-size:13px;color:var(--accent)}
 
 .project-link .empty-media{position:relative}.preview-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;pointer-events:none}.empty-media.is-previewing .preview-video{opacity:1}
+
+.email-link{color:#8ab8ff;text-decoration:underline;text-underline-offset:3px;overflow-wrap:anywhere}.email-link:hover{color:#bdd6ff}
