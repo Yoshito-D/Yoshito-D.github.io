@@ -1,4 +1,4 @@
-// Animate each section once as it enters the viewport, without hiding content.
+// Prepare fades only outside the viewport; leave initially visible content alone.
 (() => {
   const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
   if (preference.matches || !('IntersectionObserver' in window)) return;
@@ -22,22 +22,41 @@
     element.style.setProperty('--motion-delay', '200ms');
   });
 
-  const observer = new IntersectionObserver((entries) => {
-    for (const entry of entries) {
-      if (!entry.isIntersecting) continue;
-      entry.target.classList.add('motion-enter');
-      observer.unobserve(entry.target);
+  const targets = [...document.querySelectorAll('[data-motion], .site-header, .section-heading, .project-card, .year-group > h3, .work-category > h2, .detail > h1, .detail-media, .detail-section, footer')];
+  const outside = element => {
+    const rect = element.getBoundingClientRect();
+    return rect.bottom <= 0 || rect.top >= window.innerHeight;
+  };
+  const prepare = element => {
+    // Filtering may temporarily hide an entire group; wait until it has layout.
+    if (!element.getClientRects().length) return;
+    if (outside(element)) {
+      element.classList.remove('motion-enter');
+      element.classList.add('motion-pending');
+    } else if (element.classList.contains('motion-pending')) {
+      element.classList.remove('motion-pending');
+      element.classList.add('motion-enter');
     }
-  }, { threshold: 0.08 });
+  };
+  const observer = new IntersectionObserver(entries => {
+    for (const entry of entries) prepare(entry.target);
+  }, { threshold: 0 });
+  targets.forEach(element => { prepare(element); observer.observe(element); });
 
-  document.querySelectorAll('[data-motion], .site-header, .section-heading, .project-card, .year-group > h3, .work-category > h2, .detail > h1, .detail-media, .detail-section, footer')
-    .forEach((element) => observer.observe(element));
-
-  preference.addEventListener('change', (event) => {
+  // Recheck synchronously after filtering, before the browser paints moved cards.
+  const refresh = () => targets.forEach(prepare);
+  document.addEventListener('works-filter-change', refresh);
+  const focus = event => {
+    targets.filter(element => element.contains(event.target)).forEach(element => {
+      element.classList.remove('motion-pending', 'motion-enter');
+    });
+  };
+  document.addEventListener('focusin', focus);
+  preference.addEventListener('change', event => {
     if (!event.matches) return;
     observer.disconnect();
-    document.querySelectorAll('.motion-enter').forEach((element) => {
-      element.classList.remove('motion-enter');
-    });
+    document.removeEventListener('works-filter-change', refresh);
+    document.removeEventListener('focusin', focus);
+    targets.forEach(element => element.classList.remove('motion-pending', 'motion-enter'));
   });
 })();

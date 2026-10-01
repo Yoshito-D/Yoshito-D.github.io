@@ -31,6 +31,7 @@
     reset.setAttribute('aria-pressed', String(selected.size === 0));
     count.textContent = visible + ' / ' + cards.length + '作品を表示';
     empty.hidden = visible !== 0;
+    document.dispatchEvent(new Event("works-filter-change"));
   };
   buttons.forEach(button => button.addEventListener('click', () => {
     const tag = button.dataset.tag;
