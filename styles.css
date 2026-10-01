@@ -27,7 +27,18 @@
   nav a{position:relative}
   nav a::after{content:"";position:absolute;left:0;right:0;bottom:-5px;height:1px;background:var(--accent);transform:scaleX(0);transform-origin:left;transition:transform .2s ease}
   nav a:hover::after,nav a:focus-visible::after,nav a[aria-current="page"]::after{transform:scaleX(1)}
-  .motion-enter{animation:content-enter .55s ease backwards}
+  .motion-enter{animation:content-enter .55s ease backwards;animation-delay:var(--motion-delay,0ms)}
 }
 @keyframes content-enter{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
 @media(prefers-reduced-motion:reduce){.project-link,.project-link .empty-media>img,nav a::after{transition:none}.motion-enter{animation:none}}
+
+/* Directional link feedback and a gentle video crossfade. */
+.link-arrow{display:inline-block}
+@media(prefers-reduced-motion:no-preference){
+  .link-arrow{transition:transform .2s ease}
+  .all-works-link:hover .link-arrow,.all-works-link:focus-visible .link-arrow{transform:translateX(4px)}
+  .back-link:hover .link-arrow,.back-link:focus-visible .link-arrow{transform:translateX(-4px)}
+  footer a:hover .link-arrow,footer a:focus-visible .link-arrow{transform:translateY(-3px)}
+  .preview-video{transition:opacity .22s ease}
+  .project-link:focus-visible .empty-media>img{transform:scale(1.035)}
+}

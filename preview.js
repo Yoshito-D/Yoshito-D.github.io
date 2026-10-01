@@ -25,7 +25,6 @@ document.querySelectorAll('.project-link').forEach((card) => {
     generation += 1;
     clearTimeout(timeout);
     video.pause();
-    if (video.readyState > 0) video.currentTime = 0;
     media.classList.remove('is-previewing');
   };
   const start = async () => {
@@ -34,6 +33,7 @@ document.querySelectorAll('.project-link').forEach((card) => {
     const current = ++generation;
     if (!video.getAttribute('src')) video.src = source;
     try {
+      if (video.readyState > 0) video.currentTime = 0;
       await video.play();
       if (!active || current !== generation) {
         if (!active) video.pause();
