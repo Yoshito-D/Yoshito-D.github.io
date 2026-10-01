@@ -17,3 +17,17 @@
 
 /* Shared title spacing for home and categorized project cards. */
 .project-link .project-title{margin:0;padding:22px 26px;font-size:18px;font-weight:600;line-height:1.6}@media(max-width:560px){.project-link .project-title{padding:18px 22px}}
+
+/* Subtle UI motion: content remains visible if JavaScript is unavailable. */
+@media(prefers-reduced-motion:no-preference){
+  .project-link{transition:transform .22s ease,border-color .22s ease,box-shadow .22s ease}
+  .project-link:hover,.project-link:focus-visible{transform:translateY(-5px);box-shadow:0 12px 28px rgba(0,0,0,.2)}
+  .project-link .empty-media>img{transition:transform .35s ease}
+  .project-link:hover .empty-media>img{transform:scale(1.035)}
+  nav a{position:relative}
+  nav a::after{content:"";position:absolute;left:0;right:0;bottom:-5px;height:1px;background:var(--accent);transform:scaleX(0);transform-origin:left;transition:transform .2s ease}
+  nav a:hover::after,nav a:focus-visible::after,nav a[aria-current="page"]::after{transform:scaleX(1)}
+  .motion-enter{animation:content-enter .55s ease backwards}
+}
+@keyframes content-enter{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){.project-link,.project-link .empty-media>img,nav a::after{transition:none}.motion-enter{animation:none}}
