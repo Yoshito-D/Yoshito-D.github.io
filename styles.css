@@ -26,7 +26,7 @@
   .project-link:hover .empty-media>img{transform:scale(1.035)}
   nav a{position:relative}
   nav a::after{content:"";position:absolute;left:0;right:0;bottom:-5px;height:1px;background:var(--accent);transform:scaleX(0);transform-origin:left;transition:transform .2s ease}
-  nav a:hover::after,nav a:focus-visible::after,nav a[aria-current="page"]::after{transform:scaleX(1)}
+  nav a:hover::after,nav a:focus-visible::after{transform:scaleX(1)}
   .motion-pending{opacity:0}
   .motion-pending:focus-within{opacity:1}
   .motion-enter{animation:content-enter .55s ease backwards;animation-delay:var(--motion-delay,0ms)}
