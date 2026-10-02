@@ -50,6 +50,7 @@
 .project-meta{padding:0 26px 24px}
 .project-tags{display:flex;flex-wrap:wrap;gap:8px;margin:0;padding:0;list-style:none}
 .project-tags li{font-size:11px;line-height:1.6;color:var(--accent);border:1px solid var(--line);border-radius:20px;padding:4px 11px}
+.project-tags li.is-selected{background:var(--accent);border-color:var(--accent);color:var(--bg);box-shadow:0 0 12px rgba(209,245,132,.35)}
 .achievement-list{list-style:none;margin:14px 0 0;padding:0;color:var(--accent);font-size:12px;line-height:1.8}
 .achievement-list li+li{margin-top:8px}
 .detail-tags{max-width:850px;margin:-10px 0 26px}

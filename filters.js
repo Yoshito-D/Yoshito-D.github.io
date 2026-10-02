@@ -1,4 +1,4 @@
-// Tag buttons use OR matching. Content stays visible without JavaScript.
+// Tag buttons require all selected tags. Content stays visible without JavaScript.
 (() => {
   const filters = document.querySelector('.work-filters');
   if (!filters) return;
@@ -11,8 +11,10 @@
   const apply = () => {
     let visible = 0;
     for (const card of cards) {
-      const tags = [...card.querySelectorAll('.project-tags li')].map(tag => tag.textContent.trim());
-      const matches = selected.size === 0 || tags.some(tag => selected.has(tag));
+      const tagElements = [...card.querySelectorAll('.project-tags li')];
+      const tags = new Set(tagElements.map(tag => tag.textContent.trim()));
+      const matches = [...selected].every(tag => tags.has(tag));
+      tagElements.forEach(tag => tag.classList.toggle('is-selected', selected.has(tag.textContent.trim())));
       card.hidden = !matches;
       if (matches) visible++;
     }
