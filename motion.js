@@ -25,7 +25,10 @@
   const targets = [...document.querySelectorAll('[data-motion], .site-header, .section-heading, .project-card, .year-group > h3, .work-category > h2, .detail > h1, .detail-media, .detail-section, footer')];
   const outside = element => {
     const rect = element.getBoundingClientRect();
-    return rect.bottom <= 0 || rect.top >= window.innerHeight;
+    // Ignore the entrance translation when checking viewport boundaries.
+    const transform = getComputedStyle(element).transform;
+    const shift = transform === 'none' ? 0 : new DOMMatrixReadOnly(transform).m42;
+    return rect.bottom - shift <= 0 || rect.top - shift >= window.innerHeight;
   };
   const prepare = element => {
     // Filtering may temporarily hide an entire group; wait until it has layout.
