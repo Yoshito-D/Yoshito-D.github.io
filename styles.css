@@ -74,6 +74,6 @@
 /* A separate, full-width navigation bar stays above page content. */
 html{scroll-padding-top:100px}
 .site-header{position:sticky;top:0;z-index:20;max-width:none;padding-left:max(40px,calc((100% - 1040px)/2));padding-right:max(40px,calc((100% - 1040px)/2));background:var(--bg)}
-@media(prefers-reduced-motion:no-preference){.site-header{transform:translateY(0);transition:opacity .25s ease,transform .25s ease}.site-header.is-scroll-hidden{opacity:0;transform:translateY(-100%);pointer-events:none}.site-header.is-scroll-hidden:focus-within{opacity:1;transform:translateY(0);pointer-events:auto}}
+@media(prefers-reduced-motion:no-preference){.site-header{opacity:1;transform:translateY(0);transition:opacity .55s ease,transform .55s ease}.site-header.is-scroll-hidden{opacity:0;transform:translateY(-100%);pointer-events:none}.site-header.is-scroll-hidden:focus-within{opacity:1;transform:translateY(0);pointer-events:auto}}
 
 @media(max-width:800px){.site-header{padding-left:24px;padding-right:24px}}
