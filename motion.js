@@ -15,14 +15,12 @@
   document.querySelectorAll('.profile-section .reading, .profile-section h1').forEach((element) => element.setAttribute('data-motion', ''));
   document.querySelectorAll('.profile-section .role').forEach((element) => {
     element.setAttribute('data-motion', '');
-    element.style.setProperty('--motion-delay', '100ms');
   });
   document.querySelectorAll('.profile-section > div + div').forEach((element) => {
     element.setAttribute('data-motion', '');
-    element.style.setProperty('--motion-delay', '200ms');
   });
 
-  const targets = [...document.querySelectorAll('[data-motion], .site-header, .section-heading, .project-card, .year-group > h3, .work-category > h2, .detail > h1, .detail-media, .detail-section, footer')];
+  const targets = [...document.querySelectorAll('[data-motion], .site-header, .profile-section .eyebrow, .back-link, .all-works-link, .section-heading, .project-card, .year-group > h3, .work-category > h2, .detail > h1, .detail-media, .detail-section, footer')];
   const outside = element => {
     const rect = element.getBoundingClientRect();
     // Ignore the entrance translation when checking viewport boundaries.
