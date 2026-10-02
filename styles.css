@@ -77,3 +77,12 @@ html{scroll-padding-top:100px}
 @media(prefers-reduced-motion:no-preference){.site-header{opacity:1;transform:translateY(0);transition:opacity .35s ease,transform .35s ease}.site-header.is-scroll-hidden{opacity:0;transform:translateY(-100%);pointer-events:none}.site-header.is-scroll-hidden:focus-within{opacity:1;transform:translateY(0);pointer-events:auto}}
 
 @media(max-width:800px){.site-header{padding-left:24px;padding-right:24px}}
+
+/* Profile tools keep the source icons readable on the dark background. */
+.profile-tools{margin-top:18px}
+.tools-label{display:inline-block;font-size:13px;color:var(--muted);padding-bottom:5px;border-bottom:1px solid var(--line)}
+.tool-icons{display:flex;flex-wrap:wrap;align-items:center;gap:18px;list-style:none;margin:14px 0 0;padding:0}
+.tool-icons li{display:flex;align-items:center;justify-content:center;width:48px;height:48px}
+.tool-icons img{width:48px;height:48px;object-fit:contain}
+.tool-icons .tool-icon-github{filter:invert(1)}
+.tool-icons .tool-icon-pixel{image-rendering:pixelated}
