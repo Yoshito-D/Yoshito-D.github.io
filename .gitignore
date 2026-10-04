@@ -38,3 +38,6 @@ Desktop.ini
 
 # Local editing guide
 /EDITING.md
+
+# Local editor recovery data and uploads
+/.editor/

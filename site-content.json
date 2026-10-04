@@ -1,0 +1,219 @@
+{
+  "version": 1,
+  "profile": {
+    "name": "吉戸 大貴",
+    "reading": "ヨシト ダイキ / YOSHITO DAIKI",
+    "role": "ゲームプログラマー志望",
+    "school": "日本工学院専門学校 ゲームクリエイター科四年制",
+    "graduation": "2028年3月",
+    "hobby": "お笑いの動画を観る / 音楽を聴く / 散歩 等",
+    "email": "k024g0035@g.neec.ac.jp",
+    "description": "個人・チームの両方でゲーム制作に取り組んでいます。制作ではユーザーの目線を意識し、遊びやすさや分かりやすさを大切にしています。チーム制作では、相手の考えや意見を尊重し、さまざまなメンバーと円滑にコミュニケーションを取りながら、大きなトラブルなく制作を進めてきました。また、現在まで無遅刻・無欠席を継続し、日々の学習や制作に真摯に取り組んでいます。",
+    "tools": [
+      "visual-studio",
+      "github",
+      "aseprite",
+      "blender"
+    ]
+  },
+  "worksIntro": "作品情報は随時更新していきます。",
+  "projects": [
+    {
+      "id": "planet-action",
+      "title": "GALAXY RACING",
+      "production": "個人制作",
+      "year": "3年次",
+      "dimension": "3D",
+      "genre": "アクション",
+      "description": "複数の惑星をジャンプで駆け抜け、最短タイムでゴールを目指すアクションゲーム。",
+      "environment": "C++ / DirectX12",
+      "role": "全て",
+      "teamSize": "1人",
+      "duration": "",
+      "implementation": "",
+      "imageAlt": "",
+      "tags": [],
+      "achievements": [],
+      "image": "",
+      "video": "",
+      "featured": true
+    },
+    {
+      "id": "messy-world",
+      "title": "MESSY WORLD",
+      "production": "チーム制作",
+      "year": "3年次",
+      "dimension": "3D",
+      "genre": "パズル",
+      "description": "キューブを使った表現で統一感を高めた3Dパズルゲーム。ステージ編集のためのエディタも制作。",
+      "environment": "C++ / DirectX12",
+      "role": "アプリケーション / ステージエディタ / 企画",
+      "teamSize": "3人",
+      "duration": "",
+      "implementation": "",
+      "imageAlt": "",
+      "tags": [],
+      "achievements": [
+        "校内投票 2位 / 29作品"
+      ],
+      "image": "",
+      "video": "",
+      "featured": true
+    },
+    {
+      "id": "ravagon",
+      "title": "鋼殻のラヴァゴン",
+      "production": "チーム制作",
+      "year": "2年次",
+      "dimension": "3D",
+      "genre": "アクション",
+      "description": "BehaviorTreeを使ったボスAIと、行動を編集しやすくするノードエディタに取り組んだ3Dアクションゲーム。",
+      "environment": "C++ / DirectX12",
+      "role": "ボス / パーティクル / その他演出 / 各種リソース",
+      "teamSize": "3人",
+      "duration": "",
+      "implementation": "",
+      "imageAlt": "",
+      "tags": [],
+      "achievements": [
+        "校内投票 3位 / 78作品"
+      ],
+      "image": "",
+      "video": "",
+      "featured": true
+    },
+    {
+      "id": "gun-spinner",
+      "title": "GUN SPINNER",
+      "production": "チーム制作",
+      "year": "2年次",
+      "dimension": "3D",
+      "genre": "シューティング",
+      "description": "BehaviorTreeを使ったボスAIに挑戦した3Dシューティングゲーム。",
+      "environment": "C++ / DirectX12",
+      "role": "アプリケーション",
+      "teamSize": "3人",
+      "duration": "1ヶ月",
+      "implementation": "",
+      "imageAlt": "",
+      "tags": [],
+      "achievements": [
+        "校内投票 3位 / 81作品"
+      ],
+      "image": "",
+      "video": "",
+      "featured": false
+    },
+    {
+      "id": "biripiyo",
+      "title": "ゲキトツ!!ビリピヨランブル!!",
+      "production": "チーム制作",
+      "year": "2年次",
+      "dimension": "3D",
+      "genre": "アクション",
+      "description": "操作への細かなリアクションや、プログラムによるアニメーションを取り入れた3Dアクションゲーム。",
+      "environment": "C++ / DirectX12",
+      "role": "アプリケーション",
+      "teamSize": "3人",
+      "duration": "1ヶ月",
+      "implementation": "",
+      "imageAlt": "",
+      "tags": [],
+      "achievements": [
+        "校内投票 11位 / 81作品"
+      ],
+      "image": "",
+      "video": "",
+      "featured": false
+    },
+    {
+      "id": "by-virus",
+      "title": "バイヴァイラス",
+      "production": "チーム制作",
+      "year": "2年次",
+      "dimension": "2D",
+      "genre": "シューティング",
+      "description": "初めての自作エンジンによる2Dシューティングゲーム。10日間でインゲーム部分をほぼ一人で実装。",
+      "environment": "C++ / DirectX12",
+      "role": "エンジン / アプリケーション",
+      "teamSize": "3人",
+      "duration": "",
+      "implementation": "",
+      "imageAlt": "",
+      "tags": [],
+      "achievements": [
+        "校内投票 4位 / 161作品"
+      ],
+      "image": "",
+      "video": "",
+      "featured": true
+    },
+    {
+      "id": "mawarazaru",
+      "title": "まわらザルをえない",
+      "production": "チーム制作",
+      "year": "1年次",
+      "dimension": "2D",
+      "genre": "アクション",
+      "description": "2Dアクションゲーム。ステージセレクトやリザルトでは、常に画面のどこかを動かすことを意識しました。",
+      "environment": "学内制エンジン",
+      "role": "ステージセレクト / リザルト / 企画 / 各種リソース",
+      "teamSize": "3人",
+      "duration": "1ヶ月",
+      "implementation": "",
+      "imageAlt": "",
+      "tags": [],
+      "achievements": [
+        "校内投票 3位 / 75作品",
+        "第13回全国専門学校ゲームコンペティション プレイアブル部門 審査員特別賞"
+      ],
+      "image": "",
+      "video": "",
+      "featured": false
+    },
+    {
+      "id": "ao",
+      "title": "悪猟犬アオ",
+      "production": "チーム制作",
+      "year": "1年次",
+      "dimension": "2D",
+      "genre": "アクション",
+      "description": "ヒットストップやカメラシェイクなどの演出を取り入れ、操作して気持ちの良いアクションを目指した2Dアクションゲーム。",
+      "environment": "学内制エンジン",
+      "role": "プレイヤー / ボス / パーティクルなどのエフェクト",
+      "teamSize": "3人",
+      "duration": "1ヶ月",
+      "implementation": "",
+      "imageAlt": "",
+      "tags": [],
+      "achievements": [
+        "校内投票 12位 / 71作品"
+      ],
+      "image": "",
+      "video": "",
+      "featured": false
+    },
+    {
+      "id": "mengo",
+      "title": "きりすてメンゴ",
+      "production": "チーム制作",
+      "year": "1年次",
+      "dimension": "2D",
+      "genre": "アクション",
+      "description": "操作へのリアクションや、プレイヤーをほめるリザルト演出に取り組んだ2Dアクションゲーム。",
+      "environment": "学内制エンジン",
+      "role": "ステージセレクト / リザルト / 一部リソース",
+      "teamSize": "3人",
+      "duration": "2ヶ月",
+      "implementation": "",
+      "imageAlt": "",
+      "tags": [],
+      "achievements": [
+        "校内投票 9位 / 67作品"
+      ],
+      "image": "",
+      "video": "",
+      "featured": false
+    }
+  ]
+}

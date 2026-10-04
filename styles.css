@@ -87,3 +87,5 @@ html{scroll-padding-top:100px}
 .tool-icons img{width:48px;height:48px;object-fit:contain}
 .tool-icons .tool-icon-github{filter:invert(1)}
 .tool-icons .tool-icon-pixel{image-rendering:pixelated}
+
+.implementation-copy{font-size:14px}.implementation-copy p+p,.detail-section>p+p{margin-top:16px}

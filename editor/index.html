@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ポートフォリオ編集</title>
+  <link rel="stylesheet" href="../styles.css?v=20261005-editor">
+  <link rel="stylesheet" href="editor.css?v=20261005-editor">
+  <script src="editor.js?v=20261005-editor" defer></script>
+  <script src="../motion.js?v=20261002-navbar" defer></script>
+</head>
+<body class="editor-body">
+<a class="skip-link" href="#main">編集内容へ移動</a>
+<header class="site-header editor-header">
+  <div><a class="brand" href="/">Portfolio <span class="editor-badge">編集</span></a><p class="editor-local">このPC専用</p></div>
+  <div class="editor-actions"><span id="draft-status" role="status">読み込み中…</span><button id="discard" class="editor-button secondary" disabled>変更を戻す</button><button id="save" class="editor-button primary" disabled>保存して公開</button></div>
+</header>
+<main id="main" class="editor-layout">
+  <noscript><p>編集画面を使うにはJavaScriptを有効にしてください。<a href="../index.html">サイトを見る</a></p></noscript>
+  <aside class="editor-sidebar" aria-label="編集する項目" data-motion>
+    <p class="eyebrow">CONTENT</p><h1>サイトを編集</h1>
+    <button id="select-profile" class="editor-nav-item" aria-pressed="true">プロフィール・紹介文</button>
+    <div class="editor-list-heading"><h2>作品 <span id="project-count"></span></h2><button id="add-project" class="editor-button small" disabled>＋ 追加</button></div>
+    <label class="sr-only" for="project-search">作品を検索</label><input id="project-search" class="editor-search" type="search" placeholder="作品を検索">
+    <div id="project-list" class="editor-project-list"></div>
+    <p class="editor-sidebar-note">代表作品にチェックした作品を、トップページにも表示します。</p>
+    <a href="https://yoshito-d.github.io/" target="_blank" rel="noopener" class="editor-public-link" data-motion>公開サイトを開く <span class="link-arrow" aria-hidden="true">↗</span></a>
+  </aside>
+  <section class="editor-form-area" aria-labelledby="form-title" data-motion>
+    <div class="editor-form-heading"><p class="eyebrow" id="form-eyebrow">PROFILE</p><h2 id="form-title">プロフィール</h2><p>入力すると、右側のプレビューに反映されます。</p></div>
+    <form id="content-form">
+      <div id="profile-fields">
+        <fieldset class="editor-fieldset"><legend>基本情報</legend>
+          <label>氏名<input name="profile.name" required maxlength="100"></label>
+          <label>読み・英字表記<input name="profile.reading" maxlength="200"></label>
+          <label>肩書き<input name="profile.role" maxlength="200"></label>
+          <label>所属<input name="profile.school" maxlength="300"></label>
+          <div class="editor-field-row"><label>卒業予定<input name="profile.graduation" maxlength="100"></label><label>Email<input name="profile.email" type="email" maxlength="200"></label></div>
+          <label>趣味<input name="profile.hobby" maxlength="500"></label>
+          <label>紹介文<textarea name="profile.description" rows="8" maxlength="20000"></textarea></label>
+          <div class="editor-tools"><p>使用ツール</p><label><input type="checkbox" name="tool" value="visual-studio">Visual Studio</label><label><input type="checkbox" name="tool" value="github">GitHub</label><label><input type="checkbox" name="tool" value="aseprite">Aseprite</label><label><input type="checkbox" name="tool" value="blender">Blender</label></div>
+        </fieldset>
+        <fieldset class="editor-fieldset"><legend>作品一覧</legend><label>一覧ページの紹介文<textarea name="worksIntro" rows="3" maxlength="20000"></textarea></label></fieldset>
+      </div>
+      <div id="project-fields" hidden>
+        <fieldset class="editor-fieldset"><legend>作品の基本情報</legend>
+          <label>作品タイトル<input name="project.title" maxlength="200" required></label>
+          <label class="editor-check"><input name="project.featured" type="checkbox">トップページの代表作品に表示</label>
+          <div class="editor-field-row"><label>制作形態<select name="project.production"><option>個人制作</option><option>チーム制作</option></select></label><label>学年<select name="project.year"><option>1年次</option><option>2年次</option><option>3年次</option><option>4年次</option><option>5年次</option><option>6年次</option><option>7年次</option><option>8年次</option><option>9年次</option></select></label></div>
+          <div class="editor-field-row"><label>2D / 3D<select name="project.dimension"><option>2D</option><option>3D</option></select></label><label>ジャンル<input name="project.genre" list="genre-suggestions" maxlength="100" placeholder="例：アクション"></label></div>
+          <datalist id="genre-suggestions"><option value="アクション"><option value="シューティング"><option value="パズル"><option value="レース"><option value="RPG"></datalist>
+          <label for="tag-input">追加タグ</label><div id="tag-list" class="editor-tag-list"></div><div class="editor-tag-input"><input id="tag-input" maxlength="100" placeholder="例：C++、ボスAI"><button id="add-tag" type="button" class="editor-button">追加</button></div><p class="editor-help">制作形態・学年・2D/3D・ジャンルも自動でタグになります。</p>
+        </fieldset>
+        <fieldset class="editor-fieldset"><legend>画像・プレビュー動画</legend>
+          <div class="editor-media"><img id="image-preview" alt="選択中の作品画像" hidden><p id="image-empty">画像を設定すると、カードと詳細ページに表示します。</p></div>
+          <div class="editor-upload-row"><label class="editor-file-button">画像を選ぶ<input id="image-upload" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/avif"></label><button id="clear-image" type="button" class="editor-button secondary">画像を外す</button></div>
+          <p class="editor-help">PNG・JPEG・WebP・GIF・AVIF、12MBまで。表示枠は16:9です。</p>
+          <label>画像の説明<input name="project.imageAlt" maxlength="500" placeholder="例：惑星をジャンプするゲーム画面"></label>
+          <div class="editor-upload-row"><label class="editor-file-button">動画を選ぶ<input id="video-upload" type="file" accept="video/mp4"></label><button id="clear-video" type="button" class="editor-button secondary">動画を外す</button></div><p id="video-status" class="editor-help">動画は未設定です。</p><p class="editor-help">MP4、50MBまで。カードにカーソルを合わせると、無音で最大5秒再生します。</p>
+        </fieldset>
+        <fieldset class="editor-fieldset"><legend>作品の説明</legend>
+          <label>作品概要<textarea name="project.description" rows="5" maxlength="20000"></textarea></label>
+          <label>開発環境<input name="project.environment" maxlength="500" placeholder="例：C++ / DirectX12"></label>
+          <label>担当<input name="project.role" maxlength="1000"></label>
+          <div class="editor-field-row"><label>制作人数<input name="project.teamSize" maxlength="100" placeholder="例：3人"></label><label>開発期間<input name="project.duration" maxlength="100" placeholder="例：2ヶ月"></label></div>
+          <label>実績<textarea name="project.achievements" rows="3" maxlength="20000" placeholder="1行に1件ずつ入力"></textarea></label>
+          <label>実装・工夫<textarea name="project.implementation" rows="10" maxlength="20000" placeholder="課題、実装方法、判断理由、結果など"></textarea></label><p class="editor-help">空行を入れると、段落を分けられます。</p>
+        </fieldset>
+        <div class="editor-order-actions"><button id="move-up" type="button" class="editor-button secondary">↑ 順番を上げる</button><button id="move-down" type="button" class="editor-button secondary">↓ 順番を下げる</button></div>
+      </div>
+    </form>
+    <p id="message" class="editor-message" role="status" aria-live="polite" hidden></p>
+  </section>
+  <section class="editor-preview-area" aria-label="サイトのプレビュー" data-motion>
+    <div class="editor-preview-toolbar"><nav aria-label="プレビューするページ"><button data-preview="index.html" aria-pressed="true">プロフィール</button><button data-preview="works.html" aria-pressed="false">作品一覧</button><button id="preview-detail" data-preview="detail" aria-pressed="false" disabled>作品詳細</button></nav><button id="preview-width" class="editor-button small" aria-pressed="false">スマホ表示</button></div>
+    <p class="editor-preview-help">プレビュー内のタイトルや本文をクリックすると、対応する入力欄へ移動します。</p>
+    <div id="preview-container" class="editor-preview-container"><iframe id="site-preview" title="保存前のサイトプレビュー" src="/preview/index.html"></iframe></div>
+  </section>
+</main>
+<dialog id="discard-dialog" class="editor-dialog" aria-labelledby="discard-title"><h2 id="discard-title">保存前の変更を戻しますか？</h2><p>下書きを取り消し、最後に保存した内容へ戻します。</p><div class="editor-actions"><button id="cancel-discard" class="editor-button secondary">編集を続ける</button><button id="confirm-discard" class="editor-button primary">変更を戻す</button></div></dialog>
+</body></html>

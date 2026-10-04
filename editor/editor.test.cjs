@@ -1,0 +1,103 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs/promises');
+const os = require('node:os');
+const path = require('node:path');
+const { execFileSync } = require('node:child_process');
+const { readContent, validateContent, renderSite } = require('./lib/site.cjs');
+const { createEditor } = require('./server.cjs');
+
+test('new tags, text, achievements and images are consistent on all static pages', () => {
+  const content = readContent();
+  const project = content.projects[0];
+  project.title = '作品 <script> & テスト';
+  project.tags = ['ボスAI', '自由なタグ'];
+  project.achievements = ['新しい実績', 'コンテスト受賞'];
+  project.image = 'assets/uploads/test.webp';
+  project.implementation = '課題と工夫\n\n結果と学び';
+  const pages = renderSite(validateContent(content));
+  for (const name of ['index.html', 'works.html', `projects/${project.id}.html`]) {
+    const html = pages.get(name);
+    assert.ok(html.includes('作品 &lt;script&gt; &amp; テスト'));
+    assert.ok(html.includes('<li>ボスAI</li>'));
+    assert.ok(html.includes('<li>コンテスト受賞</li>'));
+    assert.ok(html.includes('assets/uploads/test.webp'));
+    assert.ok(html.includes('styles.css?') && html.includes('motion.js?'));
+    assert.ok(!html.includes('<script> & テスト'));
+  }
+  assert.ok(pages.get('works.html').includes('data-tag="自由なタグ"'));
+  assert.ok(pages.get(`projects/${project.id}.html`).includes('<p>課題と工夫</p><p>結果と学び</p>'));
+  assert.throws(() => validateContent({ ...content, projects: [{ ...project, image: 'assets/../private.png' }] }));
+});
+
+test('local editor uploads, recovers drafts, creates pages and commits/pushes only site content', async t => {
+  const folder = await fs.mkdtemp(path.join(os.tmpdir(), 'portfolio-editor-test-'));
+  const root = path.join(folder, 'site');
+  const remote = path.join(folder, 'remote.git');
+  await fs.mkdir(root);
+  const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8', windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] }).trim();
+  git('init', '-b', 'main'); git('config', 'user.name', 'Editor Test'); git('config', 'user.email', 'editor-test@example.invalid');
+  git('init', '--bare', remote); git('remote', 'add', 'origin', remote);
+  const original = validateContent(readContent());
+  await fs.writeFile(path.join(root, 'site-content.json'), JSON.stringify(original, null, 2) + '\n');
+  for (const [file, html] of renderSite(original)) { await fs.mkdir(path.dirname(path.join(root, file)), { recursive: true }); await fs.writeFile(path.join(root, file), html); }
+  await fs.writeFile(path.join(root, '.gitignore'), '.editor/\nAGENTS.md\nEDITING.md\n');
+  await fs.writeFile(path.join(root, 'unrelated.txt'), 'keep original');
+  git('add', '.'); git('commit', '-m', 'Initial fixture'); git('push', '-u', 'origin', 'main');
+  await fs.writeFile(path.join(root, 'unrelated.txt'), 'user changes');
+  const server = await createEditor({ root });
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  t.after(async () => { await new Promise(resolve => server.close(resolve)); await fs.rm(folder, { recursive: true, force: true }); });
+  const base = `http://127.0.0.1:${server.address().port}`;
+  let state = await (await fetch(`${base}/api/content`)).json();
+  const post = async (route, body, overrides = {}) => {
+    const response = await fetch(`${base}/api/${route}`, { method: 'POST', headers: { Origin: base, 'Content-Type': 'application/json', 'X-Editor-Token': state.token, ...overrides }, body: Buffer.isBuffer(body) ? body : JSON.stringify(body) });
+    return { status: response.status, data: await response.json() };
+  };
+  assert.equal((await post('preview', { content: original, revision: state.revision }, { Origin: 'http://foreign.invalid' })).status, 403);
+  assert.equal((await fetch(`${base}/.git/config`)).status, 404);
+  assert.equal((await fetch(`${base}/.editor/draft.json`)).status, 404);
+  const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aNQAAAABJRU5ErkJggg==', 'base64');
+  const upload = await post('upload', png, { 'Content-Type': 'application/octet-stream', 'X-File-Extension': 'png' });
+  assert.equal(upload.status, 200);
+  assert.equal((await post('upload', Buffer.from('not an image'), { 'Content-Type': 'application/octet-stream', 'X-File-Extension': 'png' })).status, 400);
+  const content = structuredClone(original);
+  content.projects.push({ ...content.projects[0], id: 'new-project', title: '新しい作品', tags: ['自由な新タグ'], achievements: ['追加した実績'], image: upload.data.path, featured: true });
+  const preview = await post('preview', { content, revision: state.revision });
+  assert.equal(preview.status, 200);
+  assert.ok((await (await fetch(`${base}/preview/works.html`)).text()).includes('data-tag="自由な新タグ"'));
+  assert.equal((await fetch(`${base}/preview/${upload.data.path}`)).status, 200);
+  const recovery = JSON.parse(await fs.readFile(path.join(root, '.editor/draft.json'), 'utf8'));
+  assert.equal(recovery.content.projects.length, 10);
+  assert.equal(JSON.parse(await fs.readFile(path.join(root, 'site-content.json'), 'utf8')).projects.length, 9);
+  const published = await post('save', { content, revision: state.revision });
+  assert.equal(published.status, 200, JSON.stringify(published.data));
+  assert.equal(published.data.published, true, published.data.message);
+  assert.equal(git('rev-parse', 'HEAD'), git('rev-parse', 'origin/main'));
+  assert.ok((await fs.readFile(path.join(root, 'projects/new-project.html'), 'utf8')).includes('追加した実績'));
+  assert.deepEqual(await fs.readFile(path.join(root, upload.data.path)), png);
+  assert.equal(git('status', '--short'), 'M unrelated.txt');
+  assert.equal((await post('save', { content, revision: state.revision })).status, 409);
+  state = await (await fetch(`${base}/api/content`)).json();
+  await fs.appendFile(path.join(root, 'index.html'), '\nmanual change');
+  assert.equal((await post('save', { content, revision: state.revision })).status, 400);
+  assert.ok((await fs.readFile(path.join(root, 'index.html'), 'utf8')).endsWith('manual change'));
+  await fs.writeFile(path.join(root, 'index.html'), renderSite(validateContent(content)).get('index.html').replace(/\n/g, '\r\n'));
+  // A remote rejection must preserve local edits and offer a successful retry.
+  const hook = path.join(remote, 'hooks/pre-receive');
+  await fs.writeFile(hook, '#!/bin/sh\nexit 1\n');
+  await fs.chmod(hook, 0o755);
+  content.projects[0].description += '\n公開失敗の確認';
+  const rejected = await post('save', { content, revision: state.revision });
+  assert.equal(rejected.status, 200, JSON.stringify(rejected.data));
+  assert.equal(rejected.data.saved, true);
+  assert.equal(rejected.data.published, false);
+  assert.equal(JSON.parse(await fs.readFile(path.join(root, 'site-content.json'), 'utf8')).projects[0].description, content.projects[0].description);
+  state = await (await fetch(`${base}/api/content`)).json();
+  assert.equal(state.pendingPublish, true);
+  await fs.rm(hook);
+  const retried = await post('save', { content, revision: state.revision });
+  assert.equal(retried.data.published, true, retried.data.message);
+  assert.equal(git('rev-parse', 'HEAD'), git('rev-parse', 'origin/main'));
+  assert.equal((await (await fetch(`${base}/api/content`)).json()).pendingPublish, false);
+});
