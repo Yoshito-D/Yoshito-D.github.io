@@ -255,9 +255,22 @@
         "蒲田アワードノミネート  2Dアート部門 / 新人ゲーム部門",
         "校内投票 3位 / 75作品"
       ],
-      "images": [],
+      "images": [
+        {
+          "src": "assets/uploads/148ddc34-c985-4d0a-bc0f-67020d1d6fc2.png",
+          "alt": ""
+        },
+        {
+          "src": "assets/uploads/e9efc768-f058-417a-a73d-ccce555ef3c6.png",
+          "alt": ""
+        },
+        {
+          "src": "assets/uploads/704676d2-91cb-4d05-9d71-45dd9eb6e89b.png",
+          "alt": ""
+        }
+      ],
       "updatedAt": "2026-10-05",
-      "video": "",
+      "video": "assets/uploads/f5231a18-ec42-4fd3-b030-5499ee698dd2.mp4",
       "videoLink": "https://youtu.be/trYte042MWw",
       "featured": true
     },
@@ -278,9 +291,22 @@
       "achievements": [
         "校内投票 12位 / 71作品"
       ],
-      "images": [],
+      "images": [
+        {
+          "src": "assets/uploads/89551020-b687-4c69-b3cc-5fe36b55905a.jpg",
+          "alt": ""
+        },
+        {
+          "src": "assets/uploads/38d9a9b1-1c5c-4f8b-8135-e90e1a08b51a.jpg",
+          "alt": ""
+        },
+        {
+          "src": "assets/uploads/d5b4582f-5726-4217-a8d3-eca5ebf09f53.jpg",
+          "alt": ""
+        }
+      ],
       "updatedAt": "2026-10-05",
-      "video": "",
+      "video": "assets/uploads/04de34fb-7def-4826-b217-8b747b8817fb.mp4",
       "videoLink": "https://youtu.be/xxBRqNyJFi0",
       "featured": false
     },
@@ -302,9 +328,26 @@
         "蒲田アワードノミネート ACT・STG部門",
         "校内投票 9位 / 67作品"
       ],
-      "images": [],
+      "images": [
+        {
+          "src": "assets/uploads/1b390218-601e-40fc-a537-7e015de10076.jpg",
+          "alt": ""
+        },
+        {
+          "src": "assets/uploads/97d9ae71-f7f9-442a-82a0-10a9867d4d0f.jpg",
+          "alt": ""
+        },
+        {
+          "src": "assets/uploads/c5a82b9d-09c1-4245-b2b0-71e4aa412f7e.jpg",
+          "alt": ""
+        },
+        {
+          "src": "assets/uploads/b77ad6ad-bf9b-41ec-8748-5c946741d9ad.jpg",
+          "alt": ""
+        }
+      ],
       "updatedAt": "2026-10-05",
-      "video": "",
+      "video": "assets/uploads/ae859a89-72c4-48d8-b67c-bb354f950fc1.mp4",
       "videoLink": "https://youtu.be/Tlgr2ZYZp9o",
       "featured": false
     },
