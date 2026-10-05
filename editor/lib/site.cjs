@@ -3,7 +3,7 @@ const path = require('node:path');
 
 const ROOT = path.resolve(__dirname, '../..');
 const CONTENT = 'site-content.json';
-const VERSION = '20261005-gallery';
+const VERSION = '20261005-video-placement';
 const INITIAL_DATE = '2026-10-05';
 const today = () => new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Tokyo', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
 const escape = value => String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
@@ -141,8 +141,8 @@ function renderSite(content) {
   for (const project of projects) {
     const info = [['開発環境', project.environment], ['担当', project.role], ['制作人数', project.teamSize], ['開発期間', project.duration]].map(([label, value]) => `<div><dt>${label}</dt><dd>${textLines(value)}</dd></div>`).join('');
     const media = gallery(project);
-    const videoLink = `<div class="detail-section detail-video-section">${project.videoLink ? `<a class="detail-video-link" href="${escape(project.videoLink)}" target="_blank" rel="noopener noreferrer">作品紹介動画を見る <span class="link-arrow" aria-hidden="true">↗</span><span class="sr-only">（新しいタブで開きます）</span></a>` : '<p class="detail-video-empty">準備中</p>'}</div>`;
-    pages.set(`projects/${project.id}.html`, shell(content, project.title, `<main id="main" class="detail"><a class="back-link" data-motion href="../works.html"><span class="link-arrow" aria-hidden="true">←</span> 作品一覧へ</a><h1>${escape(project.title)}</h1>${updateLabel(project.updatedAt)}<div class="detail-tags" data-motion>${tagList(project)}</div>${media}${videoLink}<section class="detail-section"><h2>作品概要</h2>${paragraphs(project.description)}<dl class="profile">${info}</dl></section>${project.achievements.length ? `<section class="detail-section"><h2>実績</h2>${achievements(project)}</section>` : ''}<section class="detail-section"><h2>実装・工夫</h2>${project.implementation ? `<div class="implementation-copy">${paragraphs(project.implementation)}</div>` : '<div class="empty-content"></div>'}</section></main>`, true));
+    const videoLink = `<div class="detail-video-section">${project.videoLink ? `<a class="detail-video-link" href="${escape(project.videoLink)}" target="_blank" rel="noopener noreferrer">作品紹介動画を見る <span class="link-arrow" aria-hidden="true">↗</span><span class="sr-only">（新しいタブで開きます）</span></a>` : '<p class="detail-video-empty">準備中</p>'}</div>`;
+    pages.set(`projects/${project.id}.html`, shell(content, project.title, `<main id="main" class="detail"><a class="back-link" data-motion href="../works.html"><span class="link-arrow" aria-hidden="true">←</span> 作品一覧へ</a><h1>${escape(project.title)}</h1>${updateLabel(project.updatedAt)}<div class="detail-topline" data-motion><div class="detail-tags">${tagList(project)}</div>${videoLink}</div>${media}<section class="detail-section"><h2>作品概要</h2>${paragraphs(project.description)}<dl class="profile">${info}</dl></section>${project.achievements.length ? `<section class="detail-section"><h2>実績</h2>${achievements(project)}</section>` : ''}<section class="detail-section"><h2>実装・工夫</h2>${project.implementation ? `<div class="implementation-copy">${paragraphs(project.implementation)}</div>` : '<div class="empty-content"></div>'}</section></main>`, true));
   }
   return pages;
 }
