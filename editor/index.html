@@ -4,7 +4,7 @@
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ポートフォリオ編集</title>
   <link rel="stylesheet" href="../styles.css?v=20261005-gallery">
-  <link rel="stylesheet" href="editor.css?v=20261005-gallery">
+  <link rel="stylesheet" href="editor.css?v=20261005-featured">
   <script src="editor.js?v=20261005-gallery" defer></script>
   <script src="../motion.js?v=20261002-navbar" defer></script>
 </head>
@@ -44,7 +44,7 @@
       <div id="project-fields" hidden>
         <fieldset class="editor-fieldset"><legend>作品の基本情報</legend>
           <label>作品タイトル<input name="project.title" maxlength="200" required></label>
-          <label class="editor-check"><input name="project.featured" type="checkbox">トップページの代表作品に表示</label>
+          <div class="editor-featured-setting"><label class="editor-check"><input name="project.featured" type="checkbox">代表作品として掲載</label><p class="editor-help">チェックすると、トップページの「代表作品」に表示します。</p></div>
           <div class="editor-field-row"><label>制作形態<select name="project.production"><option>個人制作</option><option>チーム制作</option></select></label><label>学年<select name="project.year"><option>1年次</option><option>2年次</option><option>3年次</option><option>4年次</option><option>5年次</option><option>6年次</option><option>7年次</option><option>8年次</option><option>9年次</option></select></label></div>
           <div class="editor-field-row"><label>2D / 3D<select name="project.dimension"><option>2D</option><option>3D</option></select></label><label>ジャンル<input name="project.genre" list="genre-suggestions" maxlength="100" placeholder="例：アクション"></label></div>
           <datalist id="genre-suggestions"><option value="アクション"><option value="シューティング"><option value="パズル"><option value="レース"><option value="RPG"></datalist>

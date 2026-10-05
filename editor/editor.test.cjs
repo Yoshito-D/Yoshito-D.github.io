@@ -81,13 +81,14 @@ test('introduction video URLs render only on detail pages and reject unsafe link
   const content = readContent();
   const project = content.projects[0];
   project.videoLink = 'https://example.com/video?v=intro&lang=ja';
+  content.projects[1].videoLink = '';
   const pages = renderSite(validateContent(content));
   const detail = pages.get(`projects/${project.id}.html`);
   assert.ok(detail.includes('href="https://example.com/video?v=intro&amp;lang=ja" target="_blank" rel="noopener noreferrer"'));
   assert.ok(detail.includes('作品紹介動画を見る'));
   for (const item of content.projects) {
     const html = pages.get(`projects/${item.id}.html`);
-    assert.ok(html.includes('作品紹介動画'));
+    assert.ok(!html.includes('<h2>作品紹介動画</h2>'));
     assert.ok(html.includes('←</span> 作品一覧へ</a>'));
     assert.ok(!html.includes('代表作品一覧へ'));
   }
