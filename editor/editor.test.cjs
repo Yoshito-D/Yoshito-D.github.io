@@ -30,6 +30,29 @@ test('new tags, text, achievements and images are consistent on all static pages
   assert.throws(() => validateContent({ ...content, projects: [{ ...project, image: 'assets/../private.png' }] }));
 });
 
+test('introduction video URLs render only on detail pages and reject unsafe links', () => {
+  const content = readContent();
+  const project = content.projects[0];
+  project.videoLink = 'https://example.com/video?v=intro&lang=ja';
+  const pages = renderSite(validateContent(content));
+  const detail = pages.get(`projects/${project.id}.html`);
+  assert.ok(detail.includes('href="https://example.com/video?v=intro&amp;lang=ja" target="_blank" rel="noopener noreferrer"'));
+  assert.ok(detail.includes('作品紹介動画を見る'));
+  for (const item of content.projects) {
+    const html = pages.get(`projects/${item.id}.html`);
+    assert.ok(html.includes('作品紹介動画'));
+    assert.ok(html.includes('←</span> 作品一覧へ</a>'));
+    assert.ok(!html.includes('代表作品一覧へ'));
+  }
+  assert.ok(!pages.get('works.html').includes('detail-video-section'));
+  assert.ok(!pages.get('index.html').includes('detail-video-section'));
+  const other = content.projects[1];
+  assert.ok(pages.get(`projects/${other.id}.html`).includes('class="detail-video-empty">準備中'));
+  for (const videoLink of ['javascript:alert(1)', 'data:text/html,test', 'ftp://example.com/video', 'https://name:secret@example.com/video', 'not a URL']) {
+    assert.throws(() => validateContent({ ...content, projects: [{ ...project, videoLink }] }), /作品紹介動画リンク/);
+  }
+});
+
 test('local editor uploads, recovers drafts, creates pages and commits/pushes only site content', async t => {
   const folder = await fs.mkdtemp(path.join(os.tmpdir(), 'portfolio-editor-test-'));
   const root = path.join(folder, 'site');
@@ -39,6 +62,8 @@ test('local editor uploads, recovers drafts, creates pages and commits/pushes on
   git('init', '-b', 'main'); git('config', 'user.name', 'Editor Test'); git('config', 'user.email', 'editor-test@example.invalid');
   git('init', '--bare', remote); git('remote', 'add', 'origin', remote);
   const original = validateContent(readContent());
+  // Use synthetic media in this temporary repository, not the user's assets.
+  original.projects.forEach(project => { project.image = ''; project.video = ''; });
   await fs.writeFile(path.join(root, 'site-content.json'), JSON.stringify(original, null, 2) + '\n');
   for (const [file, html] of renderSite(original)) { await fs.mkdir(path.dirname(path.join(root, file)), { recursive: true }); await fs.writeFile(path.join(root, file), html); }
   await fs.writeFile(path.join(root, '.gitignore'), '.editor/\nAGENTS.md\nEDITING.md\n');
@@ -62,7 +87,7 @@ test('local editor uploads, recovers drafts, creates pages and commits/pushes on
   assert.equal(upload.status, 200);
   assert.equal((await post('upload', Buffer.from('not an image'), { 'Content-Type': 'application/octet-stream', 'X-File-Extension': 'png' })).status, 400);
   const content = structuredClone(original);
-  content.projects.push({ ...content.projects[0], id: 'new-project', title: '新しい作品', tags: ['自由な新タグ'], achievements: ['追加した実績'], image: upload.data.path, featured: true });
+  content.projects.push({ ...content.projects[0], id: 'new-project', title: '新しい作品', tags: ['自由な新タグ'], achievements: ['追加した実績'], image: upload.data.path, videoLink: 'https://example.com/new-video', featured: true });
   const preview = await post('preview', { content, revision: state.revision });
   assert.equal(preview.status, 200);
   assert.ok((await (await fetch(`${base}/preview/works.html`)).text()).includes('data-tag="自由な新タグ"'));
@@ -75,6 +100,8 @@ test('local editor uploads, recovers drafts, creates pages and commits/pushes on
   assert.equal(published.data.published, true, published.data.message);
   assert.equal(git('rev-parse', 'HEAD'), git('rev-parse', 'origin/main'));
   assert.ok((await fs.readFile(path.join(root, 'projects/new-project.html'), 'utf8')).includes('追加した実績'));
+  assert.ok((await fs.readFile(path.join(root, 'projects/new-project.html'), 'utf8')).includes('href="https://example.com/new-video"'));
+  assert.equal(published.data.content.projects.at(-1).videoLink, 'https://example.com/new-video');
   assert.deepEqual(await fs.readFile(path.join(root, upload.data.path)), png);
   assert.equal(git('status', '--short'), 'M unrelated.txt');
   assert.equal((await post('save', { content, revision: state.revision })).status, 409);

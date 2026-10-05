@@ -36,6 +36,7 @@
       "achievements": [],
       "image": "assets/uploads/579df90e-e649-4245-8e2d-086b24d02293.jpg",
       "video": "assets/uploads/43eb7632-6a05-48b1-8d95-0fb02f30b634.mp4",
+      "videoLink": "",
       "featured": true
     },
     {
@@ -58,6 +59,7 @@
       ],
       "image": "",
       "video": "",
+      "videoLink": "",
       "featured": true
     },
     {
@@ -80,6 +82,7 @@
       ],
       "image": "",
       "video": "",
+      "videoLink": "",
       "featured": true
     },
     {
@@ -102,6 +105,7 @@
       ],
       "image": "",
       "video": "",
+      "videoLink": "",
       "featured": false
     },
     {
@@ -124,6 +128,7 @@
       ],
       "image": "",
       "video": "",
+      "videoLink": "",
       "featured": false
     },
     {
@@ -147,6 +152,7 @@
       ],
       "image": "",
       "video": "",
+      "videoLink": "",
       "featured": true
     },
     {
@@ -171,6 +177,7 @@
       ],
       "image": "",
       "video": "",
+      "videoLink": "",
       "featured": false
     },
     {
@@ -193,6 +200,7 @@
       ],
       "image": "",
       "video": "",
+      "videoLink": "",
       "featured": false
     },
     {
@@ -216,6 +224,7 @@
       ],
       "image": "",
       "video": "",
+      "videoLink": "",
       "featured": false
     }
   ]

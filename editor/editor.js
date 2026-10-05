@@ -188,7 +188,7 @@
   $('#project-search').addEventListener('input', renderList);
   $('#select-profile').addEventListener('click', () => choose(null));
   $('#add-project').addEventListener('click', async () => {
-    const project = { id: `work-${crypto.randomUUID().slice(0, 8)}`, title: '新しい作品', production: '個人制作', year: '3年次', dimension: '3D', genre: 'アクション', tags: [], description: '', environment: '', role: '', teamSize: '', duration: '', achievements: [], implementation: '', image: '', imageAlt: '', video: '', featured: false };
+    const project = { id: `work-${crypto.randomUUID().slice(0, 8)}`, title: '新しい作品', production: '個人制作', year: '3年次', dimension: '3D', genre: 'アクション', tags: [], description: '', environment: '', role: '', teamSize: '', duration: '', achievements: [], implementation: '', image: '', imageAlt: '', video: '', videoLink: '', featured: false };
     content.projects.push(project);
     selected = project.id;
     changed(); await updatePreview(); choose(project.id);
@@ -285,7 +285,8 @@
       } else if (page === 'works.html' && target.closest('.profile-description')) { choose(null, false); fieldName = 'worksIntro'; }
       else if (page.startsWith('projects/')) {
         const id = page.slice(9, -5);
-        if (target.closest('h1')) fieldName = 'project.title';
+        if (target.closest('.detail-video-section')) fieldName = 'project.videoLink';
+        else if (target.closest('h1')) fieldName = 'project.title';
         else if (target.closest('.detail-section > p')) fieldName = 'project.description';
         else if (target.closest('.achievement-list')) fieldName = 'project.achievements';
         else if (target.closest('.implementation-copy, .empty-content')) fieldName = 'project.implementation';

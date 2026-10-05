@@ -89,3 +89,5 @@ html{scroll-padding-top:100px}
 .tool-icons .tool-icon-pixel{image-rendering:pixelated}
 
 .implementation-copy{font-size:14px}.implementation-copy p+p,.detail-section>p+p{margin-top:16px}
+.detail-video-link{display:inline-flex;align-items:center;gap:8px;font-size:14px;color:var(--accent)}.detail-video-empty{color:var(--muted)}
+@media(prefers-reduced-motion:no-preference){.detail-video-link:hover .link-arrow,.detail-video-link:focus-visible .link-arrow{transform:translate(3px,-3px)}}
