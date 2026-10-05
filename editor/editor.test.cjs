@@ -4,7 +4,7 @@ const fs = require('node:fs/promises');
 const os = require('node:os');
 const path = require('node:path');
 const { execFileSync } = require('node:child_process');
-const { readContent, validateContent, renderSite, stampUpdates, today } = require('./lib/site.cjs');
+const { DEFAULT_AURA, readContent, validateContent, renderSite, stampUpdates, today } = require('./lib/site.cjs');
 const { createEditor } = require('./server.cjs');
 
 test('new tags, text, achievements and images are consistent on all static pages', () => {
@@ -32,6 +32,7 @@ test('new tags, text, achievements and images are consistent on all static pages
 
 test('galleries preserve image order, migrate old images and use only the first thumbnail', () => {
   const content = validateContent(readContent());
+  content.projects[1].images = []; // This assertion needs a fixture without gallery images.
   const project = content.projects[0];
   delete project.images;
   project.image = 'assets/uploads/legacy.jpg'; project.imageAlt = '引き継ぐ説明';
@@ -51,6 +52,32 @@ test('galleries preserve image order, migrate old images and use only the first 
   assert.ok(detail.includes('gallery.js?'));
   assert.ok(!pages.get(`projects/${content.projects[1].id}.html`).includes('gallery-controls'));
   assert.throws(() => validateContent({ ...migrated, projects: [{ ...migrated.projects[0], images: Array(21).fill(migrated.projects[0].images[0]) }] }), /20枚/);
+});
+
+test('aura settings migrate old content, validate values and propagate to every page', () => {
+  const input = readContent();
+  delete input.aura;
+  const saved = validateContent(input);
+  assert.deepEqual(saved.aura, DEFAULT_AURA);
+  saved.pageUpdatedAt = { profile: '2026-10-01', works: '2026-10-01' };
+  saved.projects.forEach(project => { project.updatedAt = '2026-10-01'; });
+  const changed = structuredClone(saved);
+  changed.aura = { color: '#315cff', accentColor: '#ac208b', saturation: 135, brightness: 22, speed: 0 };
+  const content = stampUpdates(changed, saved, '2026-10-05');
+  assert.deepEqual(content.aura, changed.aura);
+  assert.deepEqual(content.pageUpdatedAt, { profile: '2026-10-05', works: '2026-10-05' });
+  assert.ok(content.projects.every(project => project.updatedAt === '2026-10-05'));
+  for (const html of renderSite(content).values()) {
+    assert.ok(html.includes('&quot;color&quot;:&quot;#315cff&quot;'));
+    assert.ok(html.includes('&quot;speed&quot;:0'));
+    assert.ok(html.includes('--aura-color-rgb:49,92,255'));
+    assert.equal((html.match(/class="page-updated"/g) || []).length, 1);
+    assert.match(html, /<footer>.*更新日：<time datetime="2026-10-05">.*<\/footer>/);
+    assert.ok(!html.slice(0, html.indexOf('<footer>')).includes('class="page-updated"'));
+  }
+  for (const aura of [{ color: '"><script>' }, { accentColor: '#123' }, { brightness: 101 }, { speed: -1 }, { speed: '70' }, { saturation: 201 }, { brightness: NaN }]) {
+    assert.throws(() => validateContent({ ...saved, aura: { ...DEFAULT_AURA, ...aura } }), /オーラ/);
+  }
 });
 
 test('dates change only on pages affected by content and cannot be overridden by the client', () => {
@@ -121,7 +148,12 @@ test('local editor uploads, recovers drafts, creates pages and commits/pushes on
   await fs.writeFile(path.join(root, 'unrelated.txt'), 'user changes');
   const server = await createEditor({ root });
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
-  t.after(async () => { await new Promise(resolve => server.close(resolve)); await fs.rm(folder, { recursive: true, force: true }); });
+  t.after(async () => {
+    await new Promise(resolve => server.close(resolve));
+    assert.equal(path.dirname(path.resolve(folder)), path.resolve(os.tmpdir()));
+    assert.ok(path.basename(folder).startsWith('portfolio-editor-test-'));
+    await fs.rm(folder, { recursive: true, force: true });
+  });
   const base = `http://127.0.0.1:${server.address().port}`;
   let state = await (await fetch(`${base}/api/content`)).json();
   const post = async (route, body, overrides = {}) => {
@@ -172,16 +204,20 @@ test('local editor uploads, recovers drafts, creates pages and commits/pushes on
   await fs.writeFile(hook, '#!/bin/sh\nexit 1\n');
   await fs.chmod(hook, 0o755);
   content.projects[0].description += '\n公開失敗の確認';
+  content.aura = { ...DEFAULT_AURA, color: '#315cff', saturation: 125, brightness: 25, speed: 0 };
   const rejected = await post('save', { content, revision: state.revision });
   assert.equal(rejected.status, 200, JSON.stringify(rejected.data));
   assert.equal(rejected.data.saved, true);
   assert.equal(rejected.data.published, false);
   assert.equal(JSON.parse(await fs.readFile(path.join(root, 'site-content.json'), 'utf8')).projects[0].description, content.projects[0].description);
+  assert.deepEqual(JSON.parse(await fs.readFile(path.join(root, 'site-content.json'), 'utf8')).aura, content.aura);
   state = await (await fetch(`${base}/api/content`)).json();
   assert.equal(state.pendingPublish, true);
   await fs.rm(hook);
   const retried = await post('save', { content, revision: state.revision });
   assert.equal(retried.data.published, true, retried.data.message);
+  assert.deepEqual(retried.data.content.aura, content.aura);
+  for (const file of renderSite(retried.data.content).keys()) assert.ok((await fs.readFile(path.join(root, file), 'utf8')).includes('&quot;color&quot;:&quot;#315cff&quot;'));
   assert.equal(git('rev-parse', 'HEAD'), git('rev-parse', 'origin/main'));
   assert.equal((await (await fetch(`${base}/api/content`)).json()).pendingPublish, false);
 });

@@ -5,7 +5,7 @@ const os = require('node:os');
 const crypto = require('node:crypto');
 const { execFile } = require('node:child_process');
 const { promisify } = require('node:util');
-const { ROOT, CONTENT, validateContent, renderSite, stampUpdates } = require('./lib/site.cjs');
+const { ROOT, CONTENT, DEFAULT_AURA, validateContent, renderSite, stampUpdates } = require('./lib/site.cjs');
 const execute = promisify(execFile);
 const hash = value => crypto.createHash('sha256').update(value).digest('hex');
 const serialize = value => JSON.stringify(value, null, 2) + '\n';
@@ -176,7 +176,7 @@ async function createEditor({ root = ROOT } = {}) {
         throw error('操作が見つかりません。', 404);
       }
       if (req.method !== 'GET') throw error('操作が見つかりません。', 405);
-      if (name === 'api/content') return respond(res, 200, { content: draft, savedContent: saved, revision, token, pendingPublish, hasDraft: serialize(draft) !== serialize(saved) });
+      if (name === 'api/content') return respond(res, 200, { content: draft, savedContent: saved, auraDefaults: DEFAULT_AURA, revision, token, pendingPublish, hasDraft: serialize(draft) !== serialize(saved) });
       if (!name) { res.writeHead(302, { Location: '/editor/index.html', 'Cache-Control': 'no-store' }); return res.end(); }
       let file = name || 'editor/index.html';
       if (file.startsWith('preview/')) {

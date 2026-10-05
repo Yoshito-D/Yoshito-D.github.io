@@ -4,10 +4,12 @@
   const form = $('#content-form');
   const frame = $('#site-preview');
   const message = $('#message');
-  let content, token, revision, savedFingerprint, selected = null;
+  const AURA_VIEW = '@aura';
+  let content, token, revision, savedFingerprint, auraDefaults, selected = null;
   let page = 'index.html', busy = false, pendingPublish = false;
   let timer, previewJob = null, previewAgain = false, inputVersion = 0, draftedVersion = 0;
   let previewScroll = 0, messageTimer;
+  let structuralVersion = 0, renderedVersion = 0;
   const fingerprint = () => JSON.stringify(content);
   const currentProject = () => content.projects.find(project => project.id === selected);
   const element = (name, text, className) => {
@@ -36,6 +38,7 @@
     $('#save').disabled = busy || (!dirty && !pendingPublish);
     $('#discard').disabled = busy || !dirty;
     $('#add-project').disabled = busy;
+    $('#select-aura').disabled = busy;
     $('#draft-status').textContent = busy ? '処理中…' : pendingPublish ? '保存済み・公開未完了' : dirty ? '変更あり・下書きを保存中' : '保存済み';
   }
   function renderList() {
@@ -58,7 +61,8 @@
     }
     if (!matches.length) list.append(element('p', '該当する作品はありません。', 'editor-help'));
     $('#select-profile').setAttribute('aria-pressed', String(selected === null));
-    $('#preview-detail').disabled = selected === null || busy;
+    $('#select-aura').setAttribute('aria-pressed', String(selected === AURA_VIEW));
+    $('#preview-detail').disabled = !currentProject() || busy;
   }
   function renderTags() {
     const list = $('#tag-list');
@@ -111,23 +115,26 @@
   function choose(id, changePage = true) {
     selected = id;
     const project = currentProject();
-    $('#profile-fields').hidden = Boolean(project);
+    const aura = selected === AURA_VIEW;
+    $('#profile-fields').hidden = Boolean(project) || aura;
+    $('#aura-fields').hidden = !aura;
     $('#project-fields').hidden = !project;
-    $('#form-title').textContent = project ? project.title || '新しい作品' : 'プロフィール';
-    $('#form-eyebrow').textContent = project ? 'PROJECT' : 'PROFILE';
+    $('#form-title').textContent = aura ? '背景・オーラ' : project ? project.title || '新しい作品' : 'プロフィール';
+    $('#form-eyebrow').textContent = aura ? 'BACKGROUND' : project ? 'PROJECT' : 'PROFILE';
     const updated = project?.updatedAt || content.pageUpdatedAt.profile;
-    $('#updated-status').textContent = `更新日：${updated.replace(/-/g, '/')}（保存時に自動更新）`;
+    $('#updated-status').textContent = aura ? '全ページ共通の背景設定' : `更新日：${updated.replace(/-/g, '/')}（保存時に自動更新）`;
     for (const field of form.querySelectorAll('[name]')) {
-      if (field.name === 'tool') { field.checked = content.profile.tools.includes(field.value); field.disabled = Boolean(project) || busy; continue; }
+      if (field.name === 'tool') { field.checked = content.profile.tools.includes(field.value); field.disabled = Boolean(project) || aura || busy; continue; }
       const [section, key] = field.name.split('.');
-      const value = section === 'project' ? project?.[key] : section === 'profile' ? content.profile[key] : content[field.name];
+      const value = section === 'project' ? project?.[key] : section === 'profile' ? content.profile[key] : section === 'aura' ? content.aura[key] : content[field.name];
       if (field.type === 'checkbox') field.checked = Boolean(value);
       else field.value = Array.isArray(value) ? value.join('\n') : value ?? '';
-      field.disabled = busy || (section === 'project' ? !project : Boolean(project));
+      field.disabled = busy || (section === 'aura' ? !aura : section === 'project' ? !project : Boolean(project) || aura);
     }
+    updateAuraLabels();
     $('#tag-input').value = '';
     renderList(); renderTags(); renderMedia(); updateOrderButtons();
-    if (changePage) setPage(project ? `projects/${project.id}.html` : 'index.html');
+    if (changePage && !aura) setPage(project ? `projects/${project.id}.html` : 'index.html');
     document.dispatchEvent(new Event('works-filter-change'));
   }
   function setPage(value) {
@@ -143,14 +150,18 @@
     clearTimeout(timer);
     if (previewJob) { previewAgain = true; return previewJob; }
     const version = inputVersion;
+    const structure = structuralVersion;
     const snapshot = structuredClone(content);
     previewJob = (async () => {
       try {
         await api('preview', { content: snapshot, revision });
         draftedVersion = version;
         if (version === inputVersion) {
-          try { previewScroll = frame.contentWindow.scrollY; } catch { previewScroll = 0; }
-          frame.src = `/preview/${page}?v=${version}`;
+          if (structure > renderedVersion) {
+            try { previewScroll = frame.contentWindow.scrollY; } catch { previewScroll = 0; }
+            frame.src = `/preview/${page}?v=${version}`;
+            renderedVersion = structure;
+          } else syncAura();
           if (!busy && fingerprint() !== savedFingerprint) $('#draft-status').textContent = '下書き保存済み';
         }
       } catch (cause) { if (!busy) $('#draft-status').textContent = cause.message; }
@@ -159,8 +170,21 @@
     previewJob = null;
     if (previewAgain && !busy) { previewAgain = false; return updatePreview(); }
   }
-  function changed() {
+  function updateAuraLabels() {
+    for (const key of ['saturation', 'brightness', 'speed']) $(`#aura-${key}-value`).textContent = key === 'speed' && content.aura[key] === 0 ? '静止' : `${content.aura[key]}%`;
+  }
+  function syncAura() {
+    const apply = doc => {
+      if (!doc?.body) return;
+      doc.body.dataset.aura = JSON.stringify(content.aura);
+      doc.dispatchEvent(new doc.defaultView.CustomEvent('aura-settings-change', { detail: { ...content.aura } }));
+    };
+    apply(document);
+    try { apply(frame.contentDocument); } catch { /* The preview may still be navigating. */ }
+  }
+  function changed(auraOnly = false) {
     inputVersion++;
+    if (!auraOnly) structuralVersion = inputVersion;
     updateStatus(); renderList();
     clearTimeout(timer);
     timer = setTimeout(updatePreview, 450);
@@ -202,17 +226,25 @@
     if (field.name === 'tool') content.profile.tools = [...form.querySelectorAll('[name=tool]:checked')].map(checkbox => checkbox.value);
     else {
       const [section, key] = field.name.split('.');
-      const value = field.type === 'checkbox' ? field.checked : key === 'achievements' ? field.value.split('\n').filter(line => line.trim()) : field.value;
+      const value = section === 'aura' && field.type === 'range' ? Number(field.value) : field.type === 'checkbox' ? field.checked : key === 'achievements' ? field.value.split('\n').filter(line => line.trim()) : field.value;
       if (section === 'profile') content.profile[key] = value;
       else if (section === 'project') currentProject()[key] = value;
+      else if (section === 'aura') content.aura[key] = value;
       else content[field.name] = value;
     }
     if (field.name === 'project.title') $('#form-title').textContent = field.value || '新しい作品';
     if (['project.production', 'project.year'].includes(field.name)) updateOrderButtons();
-    changed();
+    const auraOnly = field.name.startsWith('aura.');
+    if (auraOnly) { updateAuraLabels(); syncAura(); }
+    changed(auraOnly);
   });
   $('#project-search').addEventListener('input', renderList);
   $('#select-profile').addEventListener('click', () => choose(null));
+  $('#select-aura').addEventListener('click', () => choose(AURA_VIEW));
+  $('#reset-aura').addEventListener('click', () => {
+    content.aura = { ...auraDefaults };
+    choose(AURA_VIEW, false); syncAura(); changed(true);
+  });
   $('#add-project').addEventListener('click', async () => {
     const project = { id: `work-${crypto.randomUUID().slice(0, 8)}`, title: '新しい作品', production: '個人制作', year: '3年次', dimension: '3D', genre: 'アクション', tags: [], description: '', environment: '', role: '', teamSize: '', duration: '', achievements: [], implementation: '', images: [], updatedAt: new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Tokyo' }).format(new Date()), video: '', videoLink: '', featured: false };
     content.projects.push(project);
@@ -282,8 +314,11 @@
     try {
       const result = await api('discard', {});
       content = result.content; revision = result.revision; savedFingerprint = fingerprint();
-      if (selected && !currentProject()) selected = null;
-      choose(selected); notice('保存済みの内容に戻しました。');
+      if (selected && selected !== AURA_VIEW && !currentProject()) selected = null;
+      choose(selected);
+      if (page.startsWith('projects/') && !content.projects.some(project => page === `projects/${project.id}.html`)) page = 'index.html';
+      setPage(page); renderedVersion = structuralVersion;
+      syncAura(); notice('保存済みの内容に戻しました。');
     } catch (cause) { notice(cause.message, true); }
     finally { setBusy(false); }
   });
@@ -294,6 +329,7 @@
       const location = frame.contentWindow.location.pathname.replace(/^\/preview\//, '');
       if (location === 'index.html' || location === 'works.html' || /^projects\/[a-z0-9-]+\.html$/.test(location)) page = location;
       syncPreviewButtons();
+      if (content) syncAura();
       if (previewScroll) { frame.contentWindow.scrollTo(0, previewScroll); previewScroll = 0; }
     } catch { return; }
     doc.addEventListener('click', event => {
@@ -330,9 +366,10 @@
   window.addEventListener('beforeunload', event => { if (content && inputVersion > draftedVersion && fingerprint() !== savedFingerprint) { event.preventDefault(); event.returnValue = ''; } });
   api('content').then(result => {
     content = result.content; token = result.token; revision = result.revision;
+    auraDefaults = result.auraDefaults;
     pendingPublish = result.pendingPublish;
     savedFingerprint = JSON.stringify(result.savedContent);
-    choose(null); updateStatus();
+    choose(null); updateStatus(); syncAura();
     if (result.hasDraft) notice('前回の下書きを復元しました。プレビューを確認してから公開できます。', false, true);
   }).catch(cause => { $('#draft-status').textContent = '読み込み失敗'; notice(`編集画面を開く.cmdから起動してください。\n${cause.message}`, true, true); });
 })();

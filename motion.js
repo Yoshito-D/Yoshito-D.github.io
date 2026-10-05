@@ -1,5 +1,27 @@
 // Draw flowing translucent ribbons on the GPU, without moving or repainting content.
 (() => {
+  const defaults = { color: '#619629', accentColor: '#064730', saturation: 100, brightness: 40, speed: 70 };
+  let settings = { ...defaults };
+  let refresh = () => {};
+  const applySettings = value => {
+    for (const key of ['color', 'accentColor']) {
+      if (/^#[0-9a-f]{6}$/i.test(value?.[key])) settings[key] = value[key];
+    }
+    for (const [key, max] of [['saturation', 200], ['brightness', 100], ['speed', 200]]) {
+      if (typeof value?.[key] === 'number' && Number.isFinite(value[key])) settings[key] = Math.max(0, Math.min(max, value[key]));
+    }
+    const rgb = color => color.slice(1).match(/../g).map(part => parseInt(part, 16));
+    const style = document.body.style;
+    style.setProperty('--aura-color-rgb', rgb(settings.color).join(','));
+    style.setProperty('--aura-accent-rgb', rgb(settings.accentColor).join(','));
+    style.setProperty('--aura-primary-opacity', settings.brightness / 100 * .22);
+    style.setProperty('--aura-accent-opacity', settings.brightness / 100 * .20);
+    style.setProperty('--aura-saturation', settings.saturation / 100);
+    document.body.dataset.aura = JSON.stringify(settings);
+    refresh();
+  };
+  try { applySettings(JSON.parse(document.body.dataset.aura || '{}')); } catch { applySettings(defaults); }
+  document.addEventListener('aura-settings-change', event => applySettings(event.detail));
   const canvas = document.createElement('canvas');
   canvas.className = 'background-aura';
   canvas.setAttribute('aria-hidden', 'true');
@@ -30,6 +52,10 @@
       #endif
       uniform vec2 resolution;
       uniform float time;
+      uniform vec3 auraColor;
+      uniform vec3 accentColor;
+      uniform float saturation;
+      uniform float brightness;
       float bell(float x) { return exp(-x * x); }
       void main() {
         vec2 uv = gl_FragCoord.xy / resolution;
@@ -59,9 +85,11 @@
         }
         float fade = smoothstep(0., .18, uv.y) * smoothstep(0., .16, 1. - uv.y);
         vec3 color = vec3(.06667, .08235, .07843);
-        color += .8 * fade * (vec3(.23, .40, .075) * (mist + folds)
-                     + vec3(.38, .59, .16) * edges
-                     + vec3(.025, .28, .19) * teal);
+        vec3 light = auraColor * vec3(.605263, .677966, .46875) * (mist + folds)
+                   + auraColor * edges + accentColor * teal;
+        float luminance = dot(light, vec3(.2126, .7152, .0722));
+        light = max(mix(vec3(luminance), light, saturation), vec3(0.));
+        color += brightness * fade * light;
         // A tiny, stationary dither keeps dark gradients from forming visible bands.
         color += (fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453) - .5) / 255.;
         gl_FragColor = vec4(color, 1.);
@@ -88,6 +116,10 @@
   gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
   const resolution = gl.getUniformLocation(program, 'resolution');
   const time = gl.getUniformLocation(program, 'time');
+  const color = gl.getUniformLocation(program, 'auraColor');
+  const accent = gl.getUniformLocation(program, 'accentColor');
+  const saturation = gl.getUniformLocation(program, 'saturation');
+  const brightness = gl.getUniformLocation(program, 'brightness');
   const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
   let frame = 0;
   let previous = 0;
@@ -110,7 +142,7 @@
     draw();
   };
   const animate = timestamp => {
-    if (previous) elapsed += Math.min((timestamp - previous) / 1000, .05) * .7;
+    if (previous) elapsed += Math.min((timestamp - previous) / 1000, .05) * settings.speed / 100;
     previous = timestamp;
     draw();
     frame = window.requestAnimationFrame(animate);
@@ -120,7 +152,16 @@
     previous = 0;
     if (lost) return;
     draw();
-    if (!preference.matches && !document.hidden) frame = window.requestAnimationFrame(animate);
+    if (!preference.matches && !document.hidden && settings.speed > 0) frame = window.requestAnimationFrame(animate);
+  };
+  refresh = () => {
+    if (lost) return;
+    const rgb = value => new Float32Array(value.slice(1).match(/../g).map(part => parseInt(part, 16) / 255));
+    gl.uniform3fv(color, rgb(settings.color));
+    gl.uniform3fv(accent, rgb(settings.accentColor));
+    gl.uniform1f(saturation, settings.saturation / 100);
+    gl.uniform1f(brightness, settings.brightness / 50);
+    update();
   };
   canvas.addEventListener('webglcontextlost', () => {
     lost = true;
@@ -132,7 +173,7 @@
   document.addEventListener('visibilitychange', update);
   preference.addEventListener('change', update);
   resize();
-  update();
+  refresh();
 })();
 
 // Hide navigation on downward scrolling and reveal it on upward scrolling.
