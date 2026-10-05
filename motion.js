@@ -59,9 +59,9 @@
         }
         float fade = smoothstep(0., .18, uv.y) * smoothstep(0., .16, 1. - uv.y);
         vec3 color = vec3(.06667, .08235, .07843);
-        color += fade * (vec3(.40, .55, .24) * (mist + folds)
-                     + vec3(.65, .78, .43) * edges
-                     + vec3(.16, .40, .33) * teal);
+        color += fade * (vec3(.23, .40, .075) * (mist + folds)
+                     + vec3(.38, .59, .16) * edges
+                     + vec3(.025, .28, .19) * teal);
         // A tiny, stationary dither keeps dark gradients from forming visible bands.
         color += (fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453) - .5) / 255.;
         gl_FragColor = vec4(color, 1.);
