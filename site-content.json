@@ -29,13 +29,13 @@
       "environment": "C++ / DirectX12",
       "role": "全て",
       "teamSize": "1人",
-      "duration": "",
+      "duration": "2026月5月~現在",
       "implementation": "",
       "imageAlt": "",
       "tags": [],
       "achievements": [],
-      "image": "",
-      "video": "",
+      "image": "assets/uploads/579df90e-e649-4245-8e2d-086b24d02293.jpg",
+      "video": "assets/uploads/43eb7632-6a05-48b1-8d95-0fb02f30b634.mp4",
       "featured": true
     },
     {
@@ -45,11 +45,11 @@
       "year": "3年次",
       "dimension": "3D",
       "genre": "パズル",
-      "description": "キューブを使った表現で統一感を高めた3Dパズルゲーム。ステージ編集のためのエディタも制作。",
+      "description": "キューブを使った表現で統一感を高めた、掃除機でゴミを吸ってゴミ箱に入れる、3Dパズルゲーム。",
       "environment": "C++ / DirectX12",
       "role": "アプリケーション / ステージエディタ / 企画",
       "teamSize": "3人",
-      "duration": "",
+      "duration": "4ヶ月",
       "implementation": "",
       "imageAlt": "",
       "tags": [],
@@ -71,7 +71,7 @@
       "environment": "C++ / DirectX12",
       "role": "ボス / パーティクル / その他演出 / 各種リソース",
       "teamSize": "3人",
-      "duration": "",
+      "duration": "1ヶ月",
       "implementation": "",
       "imageAlt": "",
       "tags": [],
@@ -142,6 +142,7 @@
       "imageAlt": "",
       "tags": [],
       "achievements": [
+        "蒲田アワードノミネート ACT・STG部門",
         "校内投票 4位 / 161作品"
       ],
       "image": "",
@@ -164,8 +165,9 @@
       "imageAlt": "",
       "tags": [],
       "achievements": [
-        "校内投票 3位 / 75作品",
-        "第13回全国専門学校ゲームコンペティション プレイアブル部門 審査員特別賞"
+        "第13回全国専門学校ゲームコンペティション プレイアブル部門 審査員特別賞",
+        "蒲田アワードノミネート  2Dアート部門 / 新人ゲーム部門",
+        "校内投票 3位 / 75作品"
       ],
       "image": "",
       "video": "",
@@ -209,6 +211,7 @@
       "imageAlt": "",
       "tags": [],
       "achievements": [
+        "蒲田アワードノミネート ACT・STG部門",
         "校内投票 9位 / 67作品"
       ],
       "image": "",
