@@ -48,7 +48,7 @@
       const button = element('button', undefined, 'editor-project-item');
       button.type = 'button';
       button.setAttribute('aria-pressed', String(selected === project.id));
-      if (project.image) { const image = element('img'); image.src = `/preview/${project.image}`; image.alt = ''; button.append(image); }
+      if (project.images[0]) { const image = element('img'); image.src = `/preview/${project.images[0].src}`; image.alt = ''; button.append(image); }
       else button.append(element('span', '', 'editor-project-placeholder'));
       const label = element('span', project.title || 'タイトル未入力');
       label.append(element('small', `${project.production} / ${project.year}${project.featured ? ' / 代表作品' : ''}`));
@@ -76,11 +76,35 @@
   function renderMedia() {
     const project = currentProject();
     if (!project) return;
-    $('#image-preview').hidden = !project.image;
-    $('#image-empty').hidden = Boolean(project.image);
-    if (project.image) $('#image-preview').src = `/preview/${project.image}`;
-    else $('#image-preview').removeAttribute('src');
-    $('#clear-image').disabled = !project.image || busy;
+    const list = $('#image-list');
+    list.replaceChildren();
+    $('#image-empty').hidden = project.images.length > 0;
+    $('#image-upload').disabled = busy || project.images.length >= 20;
+    project.images.forEach((image, index) => {
+      const item = element('div', undefined, 'editor-image-item');
+      const thumbnail = element('img'); thumbnail.src = `/preview/${image.src}`; thumbnail.alt = image.alt || `作品画像 ${index + 1}`;
+      item.append(thumbnail, element('p', `${index + 1}枚目${index === 0 ? ' ・ カードのサムネイル' : ''}`, 'editor-image-title'));
+      const label = element('label', `画像${index + 1}の説明`), input = element('input');
+      input.type = 'text'; input.maxLength = 500; input.value = image.alt; input.disabled = busy;
+      input.placeholder = '例：惑星をジャンプするゲーム画面';
+      input.addEventListener('input', () => { image.alt = input.value; thumbnail.alt = input.value || `作品画像 ${index + 1}`; changed(); });
+      label.append(input); item.append(label);
+      const actions = element('div', undefined, 'editor-image-actions');
+      for (const [text, direction] of [['↑ 前へ', -1], ['↓ 後ろへ', 1], ['外す', 0]]) {
+        const button = element('button', text, 'editor-button secondary'); button.type = 'button';
+        button.setAttribute('aria-label', `画像${index + 1}を${direction === -1 ? '前へ移動' : direction === 1 ? '後ろへ移動' : '外す'}`);
+        button.disabled = busy || (direction === -1 && index === 0) || (direction === 1 && index === project.images.length - 1);
+        button.addEventListener('click', () => {
+          if (direction) [project.images[index], project.images[index + direction]] = [project.images[index + direction], project.images[index]];
+          else project.images.splice(index, 1);
+          renderMedia(); changed();
+          const next = list.querySelectorAll('.editor-image-item')[Math.min(direction ? index + direction : index, project.images.length - 1)];
+          (next?.querySelector('button:not(:disabled)') || $('#image-upload')).focus();
+        });
+        actions.append(button);
+      }
+      item.append(actions); list.append(item);
+    });
     $('#clear-video').disabled = !project.video || busy;
     $('#video-status').textContent = project.video ? 'プレビュー動画を設定済みです。作品カードで確認できます。' : '動画は未設定です。';
   }
@@ -91,6 +115,8 @@
     $('#project-fields').hidden = !project;
     $('#form-title').textContent = project ? project.title || '新しい作品' : 'プロフィール';
     $('#form-eyebrow').textContent = project ? 'PROJECT' : 'PROFILE';
+    const updated = project?.updatedAt || content.pageUpdatedAt.profile;
+    $('#updated-status').textContent = `更新日：${updated.replace(/-/g, '/')}（保存時に自動更新）`;
     for (const field of form.querySelectorAll('[name]')) {
       if (field.name === 'tool') { field.checked = content.profile.tools.includes(field.value); field.disabled = Boolean(project) || busy; continue; }
       const [section, key] = field.name.split('.');
@@ -188,7 +214,7 @@
   $('#project-search').addEventListener('input', renderList);
   $('#select-profile').addEventListener('click', () => choose(null));
   $('#add-project').addEventListener('click', async () => {
-    const project = { id: `work-${crypto.randomUUID().slice(0, 8)}`, title: '新しい作品', production: '個人制作', year: '3年次', dimension: '3D', genre: 'アクション', tags: [], description: '', environment: '', role: '', teamSize: '', duration: '', achievements: [], implementation: '', image: '', imageAlt: '', video: '', videoLink: '', featured: false };
+    const project = { id: `work-${crypto.randomUUID().slice(0, 8)}`, title: '新しい作品', production: '個人制作', year: '3年次', dimension: '3D', genre: 'アクション', tags: [], description: '', environment: '', role: '', teamSize: '', duration: '', achievements: [], implementation: '', images: [], updatedAt: new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Tokyo' }).format(new Date()), video: '', videoLink: '', featured: false };
     content.projects.push(project);
     selected = project.id;
     changed(); await updatePreview(); choose(project.id);
@@ -200,21 +226,26 @@
   $('#move-down').addEventListener('click', () => move(1));
   for (const kind of ['image', 'video']) {
     $(`#${kind}-upload`).addEventListener('change', async event => {
-      const file = event.target.files[0];
-      if (!file) return;
+      const files = [...event.target.files];
+      if (!files.length) return;
       const project = currentProject();
-      const extension = file.name.split('.').pop().toLowerCase();
+      if (kind === 'image' && project.images.length + files.length > 20) { notice('画像は1作品につき20枚まで登録できます。', true); event.target.value = ''; return; }
       const allowed = kind === 'image' ? ['png', 'jpg', 'jpeg', 'webp', 'gif', 'avif'] : ['mp4'];
-      if (!allowed.includes(extension) || file.size > (kind === 'image' ? 12 : 50) * 1024 * 1024) { notice('対応する形式・ファイルサイズを確認してください。', true); event.target.value = ''; return; }
+      if (files.some(file => !allowed.includes(file.name.split('.').pop().toLowerCase()) || file.size > (kind === 'image' ? 12 : 50) * 1024 * 1024)) { notice('対応する形式・ファイルサイズを確認してください。', true); event.target.value = ''; return; }
       setBusy(true);
       try {
-        const result = await api('upload', await file.arrayBuffer(), { 'Content-Type': 'application/octet-stream', 'X-File-Extension': extension });
-        project[kind] = result.path;
-        changed(); notice(kind === 'image' ? '画像を設定しました。' : '動画を設定しました。');
+        for (const file of files) {
+          const extension = file.name.split('.').pop().toLowerCase();
+          const result = await api('upload', await file.arrayBuffer(), { 'Content-Type': 'application/octet-stream', 'X-File-Extension': extension });
+          if (kind === 'image') project.images.push({ src: result.path, alt: '' });
+          else project.video = result.path;
+          changed();
+        }
+        notice(kind === 'image' ? `${files.length}枚の画像を追加しました。` : '動画を設定しました。');
       } catch (cause) { notice(cause.message, true); }
       finally { event.target.value = ''; setBusy(false); await updatePreview(); }
     });
-    $(`#clear-${kind}`).addEventListener('click', () => { currentProject()[kind] = ''; renderMedia(); changed(); });
+    if (kind === 'video') $('#clear-video').addEventListener('click', () => { currentProject().video = ''; renderMedia(); changed(); });
   }
   document.querySelectorAll('[data-preview]').forEach(button => button.addEventListener('click', async () => {
     await updatePreview(); setPage(button.dataset.preview === 'detail' ? `projects/${selected}.html` : button.dataset.preview);

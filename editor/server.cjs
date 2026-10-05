@@ -5,7 +5,7 @@ const os = require('node:os');
 const crypto = require('node:crypto');
 const { execFile } = require('node:child_process');
 const { promisify } = require('node:util');
-const { ROOT, CONTENT, validateContent, renderSite } = require('./lib/site.cjs');
+const { ROOT, CONTENT, validateContent, renderSite, stampUpdates } = require('./lib/site.cjs');
 const execute = promisify(execFile);
 const hash = value => crypto.createHash('sha256').update(value).digest('hex');
 const serialize = value => JSON.stringify(value, null, 2) + '\n';
@@ -65,7 +65,7 @@ async function createEditor({ root = ROOT } = {}) {
     if (req.headers['content-type'] !== 'application/json') throw error('リクエストの形式が正しくありません。', 415);
     try { return JSON.parse(await readBody(req)); } catch (cause) { if (cause.status) throw cause; throw error('入力データを読み取れません。'); }
   };
-  const assets = content => [...new Set(content.projects.flatMap(project => [project.image, project.video]).filter(Boolean))];
+  const assets = content => [...new Set(content.projects.flatMap(project => [...project.images.map(image => image.src), project.video]).filter(Boolean))];
   const checkAssets = async content => {
     for (const name of assets(content)) {
       try { await fs.access(path.join(root, name)); }
@@ -113,7 +113,7 @@ async function createEditor({ root = ROOT } = {}) {
         }
         if (name === 'api/save') {
           const input = await json(req);
-          const content = validateContent(input.content);
+          const content = stampUpdates(input.content, saved);
           if (input.revision !== revision || hash(await fs.readFile(contentPath, 'utf8')) !== revision) throw error('保存内容が更新されています。画面を再読み込みしてください。', 409);
           try {
             await checkAssets(content);
@@ -185,7 +185,7 @@ async function createEditor({ root = ROOT } = {}) {
       }
       const extension = path.extname(file).toLowerCase();
       // Serve only site assets and the three editor UI files, never Git or recovery data.
-      if (!mime[extension] || file.includes('\\') || file.split('/').some(part => !part || part === '.' || part === '..') || !(/^(index\.html|works\.html|styles\.css|motion\.js|filters\.js|preview\.js|projects\/[a-z0-9-]+\.html|assets\/[a-zA-Z0-9_./-]+|editor\/(index\.html|editor\.css|editor\.js))$/.test(file))) throw error('ページが見つかりません。', 404);
+      if (!mime[extension] || file.includes('\\') || file.split('/').some(part => !part || part === '.' || part === '..') || !(/^(index\.html|works\.html|styles\.css|motion\.js|filters\.js|preview\.js|gallery\.js|projects\/[a-z0-9-]+\.html|assets\/[a-zA-Z0-9_./-]+|editor\/(index\.html|editor\.css|editor\.js))$/.test(file))) throw error('ページが見つかりません。', 404);
       let buffer;
       try { buffer = await fs.readFile(path.join(root, file)); }
       catch { if (file.startsWith('assets/uploads/')) buffer = await fs.readFile(path.join(local, 'uploads', path.basename(file))); else throw error('ページが見つかりません。', 404); }

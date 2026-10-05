@@ -4,7 +4,7 @@ const fs = require('node:fs/promises');
 const os = require('node:os');
 const path = require('node:path');
 const { execFileSync } = require('node:child_process');
-const { readContent, validateContent, renderSite } = require('./lib/site.cjs');
+const { readContent, validateContent, renderSite, stampUpdates, today } = require('./lib/site.cjs');
 const { createEditor } = require('./server.cjs');
 
 test('new tags, text, achievements and images are consistent on all static pages', () => {
@@ -13,7 +13,7 @@ test('new tags, text, achievements and images are consistent on all static pages
   project.title = '作品 <script> & テスト';
   project.tags = ['ボスAI', '自由なタグ'];
   project.achievements = ['新しい実績', 'コンテスト受賞'];
-  project.image = 'assets/uploads/test.webp';
+  project.images = [{ src: 'assets/uploads/test.webp', alt: 'ゲーム画面' }];
   project.implementation = '課題と工夫\n\n結果と学び';
   const pages = renderSite(validateContent(content));
   for (const name of ['index.html', 'works.html', `projects/${project.id}.html`]) {
@@ -27,7 +27,54 @@ test('new tags, text, achievements and images are consistent on all static pages
   }
   assert.ok(pages.get('works.html').includes('data-tag="自由なタグ"'));
   assert.ok(pages.get(`projects/${project.id}.html`).includes('<p>課題と工夫</p><p>結果と学び</p>'));
-  assert.throws(() => validateContent({ ...content, projects: [{ ...project, image: 'assets/../private.png' }] }));
+  assert.throws(() => validateContent({ ...content, projects: [{ ...project, images: [{ src: 'assets/../private.png', alt: '' }] }] }));
+});
+
+test('galleries preserve image order, migrate old images and use only the first thumbnail', () => {
+  const content = validateContent(readContent());
+  const project = content.projects[0];
+  delete project.images;
+  project.image = 'assets/uploads/legacy.jpg'; project.imageAlt = '引き継ぐ説明';
+  const migrated = validateContent(content);
+  assert.deepEqual(migrated.projects[0].images, [{ src: project.image, alt: project.imageAlt }]);
+  assert.equal(migrated.projects[0].image, undefined);
+  migrated.projects[0].images.push({ src: 'assets/uploads/second.png', alt: '2枚目 < & 写真' });
+  const pages = renderSite(migrated), detail = pages.get(`projects/${project.id}.html`);
+  for (const name of ['index.html', 'works.html']) {
+    assert.ok(pages.get(name).includes('src="assets/uploads/legacy.jpg"'));
+    assert.ok(!pages.get(name).includes('assets/uploads/second.png'));
+  }
+  assert.ok(detail.indexOf('legacy.jpg') < detail.indexOf('second.png'));
+  assert.ok(detail.includes('alt="2枚目 &lt; &amp; 写真"'));
+  assert.ok(detail.includes('class="gallery-controls" hidden'));
+  assert.ok(detail.includes('aria-label="次の画像"'));
+  assert.ok(detail.includes('gallery.js?'));
+  assert.ok(!pages.get(`projects/${content.projects[1].id}.html`).includes('gallery-controls'));
+  assert.throws(() => validateContent({ ...migrated, projects: [{ ...migrated.projects[0], images: Array(21).fill(migrated.projects[0].images[0]) }] }), /20枚/);
+});
+
+test('dates change only on pages affected by content and cannot be overridden by the client', () => {
+  const saved = validateContent(readContent());
+  saved.pageUpdatedAt = { profile: '2026-10-01', works: '2026-10-01' };
+  saved.projects.forEach(project => { project.updatedAt = '2026-10-01'; });
+  const input = structuredClone(saved);
+  input.projects[3].description += '詳細だけを変更';
+  input.projects[4].updatedAt = '2026-12-31';
+  let updated = stampUpdates(input, saved, '2026-10-05');
+  assert.equal(updated.projects[3].updatedAt, '2026-10-05');
+  assert.equal(updated.projects[4].updatedAt, '2026-10-01');
+  assert.deepEqual(updated.pageUpdatedAt, saved.pageUpdatedAt);
+  input.projects[0].title += '新タイトル';
+  updated = stampUpdates(input, saved, '2026-10-05');
+  assert.deepEqual(updated.pageUpdatedAt, { profile: '2026-10-05', works: '2026-10-05' });
+  assert.equal(updated.projects[0].updatedAt, '2026-10-05');
+  input.profile.description += 'プロフィール変更';
+  const profileOnly = stampUpdates({ ...saved, profile: input.profile }, saved, '2026-10-05');
+  assert.equal(profileOnly.pageUpdatedAt.profile, '2026-10-05');
+  assert.equal(profileOnly.pageUpdatedAt.works, '2026-10-01');
+  assert.equal(profileOnly.projects[0].updatedAt, '2026-10-01');
+  for (const html of renderSite(updated).values()) assert.match(html, /更新日：<time datetime="2026-10-0[15]">2026\/10\/0[15]<\/time>/);
+  assert.throws(() => validateContent({ ...saved, pageUpdatedAt: { profile: '2026-02-30' } }), /更新日/);
 });
 
 test('introduction video URLs render only on detail pages and reject unsafe links', () => {
@@ -63,7 +110,8 @@ test('local editor uploads, recovers drafts, creates pages and commits/pushes on
   git('init', '--bare', remote); git('remote', 'add', 'origin', remote);
   const original = validateContent(readContent());
   // Use synthetic media in this temporary repository, not the user's assets.
-  original.projects.forEach(project => { project.image = ''; project.video = ''; });
+  original.projects.forEach(project => { project.images = []; project.video = ''; project.updatedAt = '2026-10-01'; });
+  original.pageUpdatedAt = { profile: '2026-10-01', works: '2026-10-01' };
   await fs.writeFile(path.join(root, 'site-content.json'), JSON.stringify(original, null, 2) + '\n');
   for (const [file, html] of renderSite(original)) { await fs.mkdir(path.dirname(path.join(root, file)), { recursive: true }); await fs.writeFile(path.join(root, file), html); }
   await fs.writeFile(path.join(root, '.gitignore'), '.editor/\nAGENTS.md\nEDITING.md\n');
@@ -85,9 +133,12 @@ test('local editor uploads, recovers drafts, creates pages and commits/pushes on
   const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aNQAAAABJRU5ErkJggg==', 'base64');
   const upload = await post('upload', png, { 'Content-Type': 'application/octet-stream', 'X-File-Extension': 'png' });
   assert.equal(upload.status, 200);
+  const secondUpload = await post('upload', png, { 'Content-Type': 'application/octet-stream', 'X-File-Extension': 'png' });
+  assert.equal(secondUpload.status, 200);
   assert.equal((await post('upload', Buffer.from('not an image'), { 'Content-Type': 'application/octet-stream', 'X-File-Extension': 'png' })).status, 400);
   const content = structuredClone(original);
-  content.projects.push({ ...content.projects[0], id: 'new-project', title: '新しい作品', tags: ['自由な新タグ'], achievements: ['追加した実績'], image: upload.data.path, videoLink: 'https://example.com/new-video', featured: true });
+  const images = [{ src: upload.data.path, alt: '先頭画像' }, { src: secondUpload.data.path, alt: '2枚目' }];
+  content.projects.push({ ...content.projects[0], id: 'new-project', title: '新しい作品', tags: ['自由な新タグ'], achievements: ['追加した実績'], images, videoLink: 'https://example.com/new-video', featured: true });
   const preview = await post('preview', { content, revision: state.revision });
   assert.equal(preview.status, 200);
   assert.ok((await (await fetch(`${base}/preview/works.html`)).text()).includes('data-tag="自由な新タグ"'));
@@ -102,14 +153,19 @@ test('local editor uploads, recovers drafts, creates pages and commits/pushes on
   assert.ok((await fs.readFile(path.join(root, 'projects/new-project.html'), 'utf8')).includes('追加した実績'));
   assert.ok((await fs.readFile(path.join(root, 'projects/new-project.html'), 'utf8')).includes('href="https://example.com/new-video"'));
   assert.equal(published.data.content.projects.at(-1).videoLink, 'https://example.com/new-video');
+  assert.deepEqual(published.data.content.projects.at(-1).images, images);
+  assert.equal(published.data.content.projects.at(-1).updatedAt, today());
+  assert.equal(published.data.content.projects[0].updatedAt, '2026-10-01');
+  assert.equal(published.data.content.pageUpdatedAt.works, today());
   assert.deepEqual(await fs.readFile(path.join(root, upload.data.path)), png);
+  assert.deepEqual(await fs.readFile(path.join(root, secondUpload.data.path)), png);
   assert.equal(git('status', '--short'), 'M unrelated.txt');
   assert.equal((await post('save', { content, revision: state.revision })).status, 409);
   state = await (await fetch(`${base}/api/content`)).json();
   await fs.appendFile(path.join(root, 'index.html'), '\nmanual change');
   assert.equal((await post('save', { content, revision: state.revision })).status, 400);
   assert.ok((await fs.readFile(path.join(root, 'index.html'), 'utf8')).endsWith('manual change'));
-  await fs.writeFile(path.join(root, 'index.html'), renderSite(validateContent(content)).get('index.html').replace(/\n/g, '\r\n'));
+  await fs.writeFile(path.join(root, 'index.html'), renderSite(state.savedContent).get('index.html').replace(/\n/g, '\r\n'));
   // A remote rejection must preserve local edits and offer a successful retry.
   const hook = path.join(remote, 'hooks/pre-receive');
   await fs.writeFile(hook, '#!/bin/sh\nexit 1\n');

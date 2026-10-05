@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ポートフォリオ編集</title>
-  <link rel="stylesheet" href="../styles.css?v=20261005-video-link">
-  <link rel="stylesheet" href="editor.css?v=20261005-editor">
-  <script src="editor.js?v=20261005-video-link" defer></script>
+  <link rel="stylesheet" href="../styles.css?v=20261005-gallery">
+  <link rel="stylesheet" href="editor.css?v=20261005-gallery">
+  <script src="editor.js?v=20261005-gallery" defer></script>
   <script src="../motion.js?v=20261002-navbar" defer></script>
 </head>
 <body class="editor-body">
@@ -26,7 +26,7 @@
     <a href="https://yoshito-d.github.io/" target="_blank" rel="noopener" class="editor-public-link" data-motion>公開サイトを開く <span class="link-arrow" aria-hidden="true">↗</span></a>
   </aside>
   <section class="editor-form-area" aria-labelledby="form-title" data-motion>
-    <div class="editor-form-heading"><p class="eyebrow" id="form-eyebrow">PROFILE</p><h2 id="form-title">プロフィール</h2><p>入力すると、右側のプレビューに反映されます。</p></div>
+    <div class="editor-form-heading"><p class="eyebrow" id="form-eyebrow">PROFILE</p><h2 id="form-title">プロフィール</h2><p id="updated-status"></p><p>入力すると、右側のプレビューに反映されます。</p></div>
     <form id="content-form">
       <div id="profile-fields">
         <fieldset class="editor-fieldset"><legend>基本情報</legend>
@@ -51,10 +51,10 @@
           <label for="tag-input">追加タグ</label><div id="tag-list" class="editor-tag-list"></div><div class="editor-tag-input"><input id="tag-input" maxlength="100" placeholder="例：C++、ボスAI"><button id="add-tag" type="button" class="editor-button">追加</button></div><p class="editor-help">制作形態・学年・2D/3D・ジャンルも自動でタグになります。</p>
         </fieldset>
         <fieldset class="editor-fieldset"><legend>画像・プレビュー動画</legend>
-          <div class="editor-media"><img id="image-preview" alt="選択中の作品画像" hidden><p id="image-empty">画像を設定すると、カードと詳細ページに表示します。</p></div>
-          <div class="editor-upload-row"><label class="editor-file-button">画像を選ぶ<input id="image-upload" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/avif"></label><button id="clear-image" type="button" class="editor-button secondary">画像を外す</button></div>
-          <p class="editor-help">PNG・JPEG・WebP・GIF・AVIF、12MBまで。表示枠は16:9です。</p>
-          <label>画像の説明<input name="project.imageAlt" maxlength="500" placeholder="例：惑星をジャンプするゲーム画面"></label>
+          <p class="editor-help">先頭の画像がカードのサムネイルになります。詳細ページでは矢印で切り替えられます。</p>
+          <div id="image-list" class="editor-image-list"></div><p id="image-empty" class="editor-help">画像は未設定です。</p>
+          <div class="editor-upload-row"><label class="editor-file-button">画像を追加<input id="image-upload" type="file" multiple accept="image/png,image/jpeg,image/webp,image/gif,image/avif"></label></div>
+          <p class="editor-help">複数選択できます。1作品20枚まで、1枚12MBまで。PNG・JPEG・WebP・GIF・AVIFに対応します。</p>
           <div class="editor-upload-row"><label class="editor-file-button">動画を選ぶ<input id="video-upload" type="file" accept="video/mp4"></label><button id="clear-video" type="button" class="editor-button secondary">動画を外す</button></div><p id="video-status" class="editor-help">動画は未設定です。</p><p class="editor-help">MP4、50MBまで。カードにカーソルを合わせると、無音で最大5秒再生します。</p>
           <label>作品紹介動画リンク<input name="project.videoLink" type="url" maxlength="2000" placeholder="https://..."></label><p class="editor-help">動画ページのURLを入力すると、作品の詳細ページに「作品紹介動画を見る」リンクを表示します。空欄の場合は「準備中」と表示します。</p>
         </fieldset>

@@ -1,5 +1,9 @@
 {
   "version": 1,
+  "pageUpdatedAt": {
+    "profile": "2026-10-05",
+    "works": "2026-10-05"
+  },
   "profile": {
     "name": "吉戸 大貴",
     "reading": "ヨシト ダイキ / YOSHITO DAIKI",
@@ -31,10 +35,15 @@
       "teamSize": "1人",
       "duration": "2026月5月~現在",
       "implementation": "",
-      "imageAlt": "",
       "tags": [],
       "achievements": [],
-      "image": "assets/uploads/579df90e-e649-4245-8e2d-086b24d02293.jpg",
+      "images": [
+        {
+          "src": "assets/uploads/579df90e-e649-4245-8e2d-086b24d02293.jpg",
+          "alt": ""
+        }
+      ],
+      "updatedAt": "2026-10-05",
       "video": "assets/uploads/43eb7632-6a05-48b1-8d95-0fb02f30b634.mp4",
       "videoLink": "",
       "featured": true
@@ -52,12 +61,12 @@
       "teamSize": "3人",
       "duration": "4ヶ月",
       "implementation": "",
-      "imageAlt": "",
       "tags": [],
       "achievements": [
         "校内投票 2位 / 29作品"
       ],
-      "image": "",
+      "images": [],
+      "updatedAt": "2026-10-05",
       "video": "",
       "videoLink": "",
       "featured": true
@@ -75,12 +84,12 @@
       "teamSize": "3人",
       "duration": "1ヶ月",
       "implementation": "",
-      "imageAlt": "",
       "tags": [],
       "achievements": [
         "校内投票 3位 / 78作品"
       ],
-      "image": "",
+      "images": [],
+      "updatedAt": "2026-10-05",
       "video": "",
       "videoLink": "",
       "featured": true
@@ -98,12 +107,12 @@
       "teamSize": "3人",
       "duration": "1ヶ月",
       "implementation": "",
-      "imageAlt": "",
       "tags": [],
       "achievements": [
         "校内投票 3位 / 81作品"
       ],
-      "image": "",
+      "images": [],
+      "updatedAt": "2026-10-05",
       "video": "",
       "videoLink": "",
       "featured": false
@@ -121,12 +130,12 @@
       "teamSize": "3人",
       "duration": "1ヶ月",
       "implementation": "",
-      "imageAlt": "",
       "tags": [],
       "achievements": [
         "校内投票 11位 / 81作品"
       ],
-      "image": "",
+      "images": [],
+      "updatedAt": "2026-10-05",
       "video": "",
       "videoLink": "",
       "featured": false
@@ -144,13 +153,13 @@
       "teamSize": "3人",
       "duration": "",
       "implementation": "",
-      "imageAlt": "",
       "tags": [],
       "achievements": [
         "蒲田アワードノミネート ACT・STG部門",
         "校内投票 4位 / 161作品"
       ],
-      "image": "",
+      "images": [],
+      "updatedAt": "2026-10-05",
       "video": "",
       "videoLink": "",
       "featured": true
@@ -168,14 +177,14 @@
       "teamSize": "3人",
       "duration": "1ヶ月",
       "implementation": "",
-      "imageAlt": "",
       "tags": [],
       "achievements": [
         "第13回全国専門学校ゲームコンペティション プレイアブル部門 審査員特別賞",
         "蒲田アワードノミネート  2Dアート部門 / 新人ゲーム部門",
         "校内投票 3位 / 75作品"
       ],
-      "image": "",
+      "images": [],
+      "updatedAt": "2026-10-05",
       "video": "",
       "videoLink": "",
       "featured": false
@@ -193,12 +202,12 @@
       "teamSize": "3人",
       "duration": "1ヶ月",
       "implementation": "",
-      "imageAlt": "",
       "tags": [],
       "achievements": [
         "校内投票 12位 / 71作品"
       ],
-      "image": "",
+      "images": [],
+      "updatedAt": "2026-10-05",
       "video": "",
       "videoLink": "",
       "featured": false
@@ -216,13 +225,13 @@
       "teamSize": "3人",
       "duration": "2ヶ月",
       "implementation": "",
-      "imageAlt": "",
       "tags": [],
       "achievements": [
         "蒲田アワードノミネート ACT・STG部門",
         "校内投票 9位 / 67作品"
       ],
-      "image": "",
+      "images": [],
+      "updatedAt": "2026-10-05",
       "video": "",
       "videoLink": "",
       "featured": false
