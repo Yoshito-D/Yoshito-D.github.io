@@ -3,7 +3,7 @@ const path = require('node:path');
 
 const ROOT = path.resolve(__dirname, '../..');
 const CONTENT = 'site-content.json';
-const VERSION = '20261005-video-placement';
+const VERSION = '20261005-aura';
 const INITIAL_DATE = '2026-10-05';
 const today = () => new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Tokyo', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
 const escape = value => String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
