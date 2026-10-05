@@ -42,7 +42,7 @@
       "role": "全て",
       "teamSize": "1人",
       "duration": "2026月5月~現在",
-      "implementation": "準備中。",
+      "implementation": "重力方向などが変わってもプレイヤーを見失わせず、カメラの操作をあまりしなくても、操作に集中できる画面を目指しました。\nソニックブームや集中線、カメラの引きなどで疾走感を演出しました。",
       "tags": [],
       "achievements": [],
       "images": [
@@ -51,7 +51,7 @@
           "alt": ""
         }
       ],
-      "updatedAt": "2026-10-05",
+      "updatedAt": "2026-10-06",
       "video": "assets/uploads/43eb7632-6a05-48b1-8d95-0fb02f30b634.mp4",
       "videoLink": "https://youtu.be/9jMRl-FLWpU",
       "featured": true
@@ -63,12 +63,12 @@
       "year": "3年次",
       "dimension": "3D",
       "genre": "パズル",
-      "description": "キューブを使った表現で統一感を高めた、掃除機でゴミを吸ってゴミ箱に入れる3Dパズルゲーム。",
+      "description": "掃除機でゴミを吸ってゴミ箱に入れる3Dパズルゲーム。",
       "environment": "C++ / DirectX12",
       "role": "アプリケーション / ステージエディタ / 企画",
       "teamSize": "3人",
       "duration": "4ヶ月",
-      "implementation": "準備中。",
+      "implementation": "Bonfire Peaks というゲームをリファレンスにパーティクルなどをキューブで表現し、統一感を高めました。\nまた、チームメンバーのプランナーがレベルデザインしやすくなるように、ブロックの配置や選択等、ステージの編集ができるエディタを作成しました。",
       "tags": [],
       "achievements": [
         "校内投票 2位 / 29作品"
@@ -83,7 +83,7 @@
           "alt": ""
         }
       ],
-      "updatedAt": "2026-10-05",
+      "updatedAt": "2026-10-06",
       "video": "assets/uploads/3602b70e-d0be-49c4-b826-941806d86faa.mp4",
       "videoLink": "https://youtu.be/CHORKg71XII",
       "featured": true
@@ -97,10 +97,10 @@
       "genre": "アクション",
       "description": "中央にあるポールを使って、ボスの装甲を破壊する3Dアクションゲーム。",
       "environment": "C++ / DirectX12",
-      "role": "ボス / パーティクル / その他演出 / 各種リソース",
+      "role": "ボス / パーティクル / レベルデザイン / その他演出 / 各種リソース",
       "teamSize": "3人",
       "duration": "1ヶ月",
-      "implementation": "準備中。",
+      "implementation": "BehaviorTreeを使ったAIをこれまで作ってきて、コード上で\n編集するのに限界を感じたため、ノードエディタを作成し、\nレベルデザインしました。",
       "tags": [],
       "achievements": [
         "校内投票 3位 / 78作品"
@@ -123,7 +123,7 @@
           "alt": ""
         }
       ],
-      "updatedAt": "2026-10-05",
+      "updatedAt": "2026-10-06",
       "video": "assets/uploads/b02f4aee-77ad-4b39-abcc-5685025b9a80.mp4",
       "videoLink": "https://youtu.be/6cN_TMcCHyo",
       "featured": true
@@ -140,7 +140,7 @@
       "role": "アプリケーション",
       "teamSize": "3人",
       "duration": "1ヶ月",
-      "implementation": "準備中。",
+      "implementation": "さまざまなボスの行動ロジックを階層化して、制御しやすく\nするために、BehaviorTreeを使ったボスAIに初めて挑戦しました。",
       "tags": [],
       "achievements": [
         "校内投票 3位 / 81作品"
@@ -159,7 +159,7 @@
           "alt": ""
         }
       ],
-      "updatedAt": "2026-10-05",
+      "updatedAt": "2026-10-06",
       "video": "assets/uploads/e78832ae-fff1-4b4f-a140-f1aaaa937db3.mp4",
       "videoLink": "https://youtu.be/KnK7j0mC-GA",
       "featured": false
@@ -176,7 +176,7 @@
       "role": "アプリケーション",
       "teamSize": "3人",
       "duration": "1ヶ月",
-      "implementation": "準備中。",
+      "implementation": "手触りを良くするため、操作に対して細かくリアクションをつけることを意識しました。\nプログラムによるアニメーションや演出を各所に入れ完成度を高めました。",
       "tags": [],
       "achievements": [
         "校内投票 11位 / 81作品"
@@ -195,7 +195,7 @@
           "alt": ""
         }
       ],
-      "updatedAt": "2026-10-05",
+      "updatedAt": "2026-10-06",
       "video": "assets/uploads/2a6b4c07-1e13-429f-bd66-3efc46d43286.mp4",
       "videoLink": "https://youtu.be/NJxmCPfJzWY",
       "featured": false
@@ -212,7 +212,7 @@
       "role": "エンジン / アプリケーション",
       "teamSize": "3人",
       "duration": "10日",
-      "implementation": "準備中。",
+      "implementation": "はじめての自作のエンジンでのゲーム制作でした。\n一人はプランナーで、もう一人はリソース担当だったため、自機の挙動やゲームのシステム部分、ボスなどのインゲーム部分をほぼ一人で作りきりました。",
       "tags": [],
       "achievements": [
         "蒲田アワードノミネート ACT・STG部門",
@@ -232,7 +232,7 @@
           "alt": ""
         }
       ],
-      "updatedAt": "2026-10-05",
+      "updatedAt": "2026-10-06",
       "video": "assets/uploads/e41c4137-837e-4e1e-bd0e-b257d435e3ed.mp4",
       "videoLink": "https://youtu.be/BiXqVUqQiGc",
       "featured": true
