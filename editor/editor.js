@@ -226,7 +226,7 @@
     if (field.name === 'tool') content.profile.tools = [...form.querySelectorAll('[name=tool]:checked')].map(checkbox => checkbox.value);
     else {
       const [section, key] = field.name.split('.');
-      const value = section === 'aura' && field.type === 'range' ? Number(field.value) : field.type === 'checkbox' ? field.checked : key === 'achievements' ? field.value.split('\n').filter(line => line.trim()) : field.value;
+      const value = (field.name === 'desktopColumns' || (section === 'aura' && field.type === 'range')) ? Number(field.value) : field.type === 'checkbox' ? field.checked : key === 'achievements' ? field.value.split('\n').filter(line => line.trim()) : field.value;
       if (section === 'profile') content.profile[key] = value;
       else if (section === 'project') currentProject()[key] = value;
       else if (section === 'aura') content.aura[key] = value;

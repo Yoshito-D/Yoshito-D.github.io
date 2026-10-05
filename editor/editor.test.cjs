@@ -221,3 +221,17 @@ test('local editor uploads, recovers drafts, creates pages and commits/pushes on
   assert.equal(git('rev-parse', 'HEAD'), git('rev-parse', 'origin/main'));
   assert.equal((await (await fetch(`${base}/api/content`)).json()).pendingPublish, false);
 });
+test('desktop columns migrate, validate, persist and update both card pages', () => {
+  const input = readContent();
+  delete input.desktopColumns;
+  assert.equal(validateContent(input).desktopColumns, 3);
+  for (const columns of [1, 2, 3, 4]) {
+    const content = validateContent({ ...input, desktopColumns: columns });
+    const pages = renderSite(content);
+    for (const file of ['index.html', 'works.html']) assert.ok(pages.get(file).includes(`--desktop-columns:${columns}`));
+    const updated = stampUpdates(content, validateContent({ ...input, desktopColumns: columns === 4 ? 3 : 4 }), '2026-10-06');
+    assert.equal(updated.pageUpdatedAt.profile, '2026-10-06');
+    assert.equal(updated.pageUpdatedAt.works, '2026-10-06');
+  }
+  for (const value of [0, 5, 2.5, '4']) assert.throws(() => validateContent({ ...input, desktopColumns: value }));
+});

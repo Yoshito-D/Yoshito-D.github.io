@@ -108,8 +108,8 @@ html{font-size:16px}
 nav a[aria-current]{color:var(--accent);font-weight:600;text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:.5em}
 nav a[aria-current]::after{display:none}
 
-/* Desktop cards share three equal columns, including single-card groups. */
+/* Desktop cards share the configured equal columns, including single-card groups. */
 @media(min-width:1000px){
-  .featured-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
-  .year-group .featured-grid:has(>.project-card:only-child){max-width:none;grid-template-columns:repeat(3,minmax(0,1fr))}
+  .featured-grid{grid-template-columns:repeat(var(--desktop-columns,4),minmax(0,1fr))}
+  .year-group .featured-grid:has(>.project-card:only-child){max-width:none;grid-template-columns:repeat(var(--desktop-columns,4),minmax(0,1fr))}
 }

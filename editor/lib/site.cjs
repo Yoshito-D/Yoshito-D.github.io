@@ -3,7 +3,7 @@ const path = require('node:path');
 
 const ROOT = path.resolve(__dirname, '../..');
 const CONTENT = 'site-content.json';
-const VERSION = '20261005-current-nav';
+const VERSION = '20261005-card-columns';
 const DEFAULT_AURA = Object.freeze({ color: '#619629', accentColor: '#064730', saturation: 100, brightness: 40, speed: 70 });
 const INITIAL_DATE = '2026-10-05';
 const today = () => new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Tokyo', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
@@ -33,6 +33,8 @@ function validateContent(input) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(result) || Number.isNaN(Date.parse(result)) || new Date(result).toISOString().slice(0, 10) !== result) throw new Error('更新日の形式が正しくありません。');
     return result;
   };
+  const desktopColumns = input.desktopColumns ?? 3;
+  if (!Number.isInteger(desktopColumns) || desktopColumns < 1 || desktopColumns > 4) throw new Error('PCのカード列数は1〜4列から選択してください。');
   const sourceAura = input.aura ?? DEFAULT_AURA;
   if (!sourceAura || typeof sourceAura !== 'object' || Array.isArray(sourceAura)) throw new Error('背景のオーラの設定を確認してください。');
   const aura = {};
@@ -86,7 +88,7 @@ function validateContent(input) {
     project.featured = item.featured === true;
     return project;
   });
-  return { version: 1, pageUpdatedAt: { profile: date(input.pageUpdatedAt?.profile), works: date(input.pageUpdatedAt?.works) }, aura, profile, worksIntro: string(input.worksIntro, '作品一覧の紹介文'), projects };
+  return { version: 1, desktopColumns, pageUpdatedAt: { profile: date(input.pageUpdatedAt?.profile), works: date(input.pageUpdatedAt?.works) }, aura, profile, worksIntro: string(input.worksIntro, '作品一覧の紹介文'), projects };
 }
 
 // Compare the actual page content with fixed dates so unrelated pages keep their date.
@@ -134,7 +136,7 @@ function shell(content, title, body, detail = false, filters = false, updatedAt 
   const shareUrl = new URL(pagePath, siteUrl).href;
   const imageUrl = shareImage ? new URL(shareImage.src, siteUrl).href : '';
   const metadata = `<meta name="description" content="${escape(description)}"><meta property="og:type" content="website"><meta property="og:locale" content="ja_JP"><meta property="og:site_name" content="${escape(pageName)} Portfolio"><meta property="og:title" content="${escape(shareTitle)}"><meta property="og:description" content="${escape(description)}"><meta property="og:url" content="${escape(shareUrl)}">${imageUrl ? `<meta property="og:image" content="${escape(imageUrl)}"><meta property="og:image:alt" content="GALAXY RACINGのゲーム画面">` : ''}<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="${escape(shareTitle)}"><meta name="twitter:description" content="${escape(description)}">${imageUrl ? `<meta name="twitter:image" content="${escape(imageUrl)}"><meta name="twitter:image:alt" content="GALAXY RACINGのゲーム画面">` : ''}`;
-  return `<!DOCTYPE html>\n<html lang="ja"><head>${metadata}<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#111514"><title>${escape(title)} | ${escape(pageName)}</title><link rel="stylesheet" href="${prefix}styles.css?v=${VERSION}">${detail ? `<script src="../gallery.js?v=${VERSION}" defer></script>` : `<script src="${prefix}preview.js?v=20261002-shared" defer></script>`}<script src="${prefix}motion.js?v=${VERSION}" defer></script>${filters ? '<script src="filters.js?v=20261002-tag-and" defer></script>' : ''}</head><body data-aura="${escape(JSON.stringify(content.aura))}" style="${auraStyle(content.aura)}"><a class="skip-link" href="#main">本文へ移動</a><header class="site-header"><a class="brand" href="${title === 'プロフィール' ? '#' : home}" aria-label="トップへ">Portfolio</a><nav aria-label="メインナビゲーション"><a href="${title === 'プロフィール' ? '#about' : `${home}#about`}"${title === 'プロフィール' ? ' aria-current="page"' : ''}>プロフィール</a><a href="${works}"${filters ? ' aria-current="page"' : detail ? ' aria-current="location"' : ''}>作品一覧</a></nav></header>${body}<footer><a href="#">ページの先頭へ <span class="link-arrow" aria-hidden="true">↑</span></a>${updateLabel(updatedAt, false)}</footer></body></html>\n`;
+  return `<!DOCTYPE html>\n<html lang="ja"><head>${metadata}<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#111514"><title>${escape(title)} | ${escape(pageName)}</title><link rel="stylesheet" href="${prefix}styles.css?v=${VERSION}">${detail ? `<script src="../gallery.js?v=${VERSION}" defer></script>` : `<script src="${prefix}preview.js?v=20261002-shared" defer></script>`}<script src="${prefix}motion.js?v=${VERSION}" defer></script>${filters ? '<script src="filters.js?v=20261002-tag-and" defer></script>' : ''}</head><body data-aura="${escape(JSON.stringify(content.aura))}" style="${auraStyle(content.aura)};--desktop-columns:${content.desktopColumns}"><a class="skip-link" href="#main">本文へ移動</a><header class="site-header"><a class="brand" href="${title === 'プロフィール' ? '#' : home}" aria-label="トップへ">Portfolio</a><nav aria-label="メインナビゲーション"><a href="${title === 'プロフィール' ? '#about' : `${home}#about`}"${title === 'プロフィール' ? ' aria-current="page"' : ''}>プロフィール</a><a href="${works}"${filters ? ' aria-current="page"' : detail ? ' aria-current="location"' : ''}>作品一覧</a></nav></header>${body}<footer><a href="#">ページの先頭へ <span class="link-arrow" aria-hidden="true">↑</span></a>${updateLabel(updatedAt, false)}</footer></body></html>\n`;
 }
 
 function card(project, heading = 'h3') {
