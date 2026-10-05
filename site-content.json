@@ -106,6 +106,10 @@
       ],
       "images": [
         {
+          "src": "assets/uploads/f7f17e6c-6f7b-4838-ab09-08c903dc626c.png",
+          "alt": ""
+        },
+        {
           "src": "assets/uploads/31f3fc09-de24-4460-b67c-7880e321db3e.jpg",
           "alt": ""
         },
@@ -213,9 +217,22 @@
         "蒲田アワードノミネート ACT・STG部門",
         "校内投票 4位 / 161作品"
       ],
-      "images": [],
+      "images": [
+        {
+          "src": "assets/uploads/ddd859da-1df6-44c7-97de-b3269e187b1f.png",
+          "alt": ""
+        },
+        {
+          "src": "assets/uploads/9c08325f-e04b-4ed4-b241-fd9f5e64db30.png",
+          "alt": ""
+        },
+        {
+          "src": "assets/uploads/a6f3e74f-5526-4772-875a-0dde2d3ee3d3.png",
+          "alt": ""
+        }
+      ],
       "updatedAt": "2026-10-05",
-      "video": "",
+      "video": "assets/uploads/e41c4137-837e-4e1e-bd0e-b257d435e3ed.mp4",
       "videoLink": "https://youtu.be/BiXqVUqQiGc",
       "featured": true
     },
