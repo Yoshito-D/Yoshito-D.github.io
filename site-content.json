@@ -104,9 +104,22 @@
       "achievements": [
         "校内投票 3位 / 78作品"
       ],
-      "images": [],
+      "images": [
+        {
+          "src": "assets/uploads/31f3fc09-de24-4460-b67c-7880e321db3e.jpg",
+          "alt": ""
+        },
+        {
+          "src": "assets/uploads/fa7a4986-5ca2-4e34-8063-b03f083fab5f.jpg",
+          "alt": ""
+        },
+        {
+          "src": "assets/uploads/1021496c-1a4a-401e-a168-ce47c93e39e4.jpg",
+          "alt": ""
+        }
+      ],
       "updatedAt": "2026-10-05",
-      "video": "",
+      "video": "assets/uploads/b02f4aee-77ad-4b39-abcc-5685025b9a80.mp4",
       "videoLink": "https://youtu.be/6cN_TMcCHyo",
       "featured": true
     },
