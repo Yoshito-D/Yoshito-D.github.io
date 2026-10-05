@@ -3,7 +3,7 @@ const path = require('node:path');
 
 const ROOT = path.resolve(__dirname, '../..');
 const CONTENT = 'site-content.json';
-const VERSION = '20261005-aura-tone';
+const VERSION = '20261005-aura-calm';
 const INITIAL_DATE = '2026-10-05';
 const today = () => new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Tokyo', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
 const escape = value => String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
@@ -108,7 +108,7 @@ function shell(content, title, body, detail = false, filters = false) {
   const pageName = content.profile.name.replace(/\s/g, '');
   const home = detail ? '../index.html' : 'index.html';
   const works = `${prefix}works.html`;
-  return `<!DOCTYPE html>\n<html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#111514"><title>${escape(title)} | ${escape(pageName)}</title><link rel="stylesheet" href="${prefix}styles.css?v=${VERSION}">${detail ? `<script src="../gallery.js?v=${VERSION}" defer></script>` : `<script src="${prefix}preview.js?v=20261002-shared" defer></script>`}<script src="${prefix}motion.js?v=20261005-aura-tone" defer></script>${filters ? '<script src="filters.js?v=20261002-tag-and" defer></script>' : ''}</head><body><a class="skip-link" href="#main">本文へ移動</a><header class="site-header"><a class="brand" href="${title === 'プロフィール' ? '#' : home}" aria-label="トップへ">Portfolio</a><nav aria-label="メインナビゲーション"><a href="${title === 'プロフィール' ? '#about' : `${home}#about`}">プロフィール</a><a href="${works}"${filters ? ' aria-current="page"' : ''}>作品一覧</a></nav></header>${body}<footer><a href="#">ページの先頭へ <span class="link-arrow" aria-hidden="true">↑</span></a></footer></body></html>\n`;
+  return `<!DOCTYPE html>\n<html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#111514"><title>${escape(title)} | ${escape(pageName)}</title><link rel="stylesheet" href="${prefix}styles.css?v=${VERSION}">${detail ? `<script src="../gallery.js?v=${VERSION}" defer></script>` : `<script src="${prefix}preview.js?v=20261002-shared" defer></script>`}<script src="${prefix}motion.js?v=20261005-aura-calm" defer></script>${filters ? '<script src="filters.js?v=20261002-tag-and" defer></script>' : ''}</head><body><a class="skip-link" href="#main">本文へ移動</a><header class="site-header"><a class="brand" href="${title === 'プロフィール' ? '#' : home}" aria-label="トップへ">Portfolio</a><nav aria-label="メインナビゲーション"><a href="${title === 'プロフィール' ? '#about' : `${home}#about`}">プロフィール</a><a href="${works}"${filters ? ' aria-current="page"' : ''}>作品一覧</a></nav></header>${body}<footer><a href="#">ページの先頭へ <span class="link-arrow" aria-hidden="true">↑</span></a></footer></body></html>\n`;
 }
 
 function card(project, heading = 'h3') {

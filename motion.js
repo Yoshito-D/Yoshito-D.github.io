@@ -59,7 +59,7 @@
         }
         float fade = smoothstep(0., .18, uv.y) * smoothstep(0., .16, 1. - uv.y);
         vec3 color = vec3(.06667, .08235, .07843);
-        color += fade * (vec3(.23, .40, .075) * (mist + folds)
+        color += .8 * fade * (vec3(.23, .40, .075) * (mist + folds)
                      + vec3(.38, .59, .16) * edges
                      + vec3(.025, .28, .19) * teal);
         // A tiny, stationary dither keeps dark gradients from forming visible bands.
@@ -110,7 +110,7 @@
     draw();
   };
   const animate = timestamp => {
-    if (previous) elapsed += Math.min((timestamp - previous) / 1000, .05);
+    if (previous) elapsed += Math.min((timestamp - previous) / 1000, .05) * .7;
     previous = timestamp;
     draw();
     frame = window.requestAnimationFrame(animate);
