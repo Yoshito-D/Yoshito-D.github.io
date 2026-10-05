@@ -290,6 +290,44 @@
       "video": "",
       "videoLink": "https://youtu.be/Tlgr2ZYZp9o",
       "featured": false
+    },
+    {
+      "id": "work-804e0eb7",
+      "title": "つながザルをえない",
+      "production": "チーム制作",
+      "year": "3年次",
+      "dimension": "3D",
+      "genre": "アクション",
+      "description": "準備中。",
+      "environment": "C++ / DirectX12",
+      "role": "準備中。",
+      "teamSize": "3人",
+      "duration": "10日",
+      "implementation": "準備中。",
+      "tags": [
+        "ストラテジー"
+      ],
+      "achievements": [
+        "校内投票 5位 / 154作品"
+      ],
+      "images": [
+        {
+          "src": "assets/uploads/5d789b71-5206-4397-a0c4-b77ba793cd35.jpg",
+          "alt": ""
+        },
+        {
+          "src": "assets/uploads/460b55b6-7ba9-43f0-93cb-652cdb4c1864.jpg",
+          "alt": ""
+        },
+        {
+          "src": "assets/uploads/28a94716-9cee-4e10-9ed0-6767107db2b9.jpg",
+          "alt": ""
+        }
+      ],
+      "updatedAt": "2026-10-05",
+      "video": "assets/uploads/91347e0c-e5f2-43d9-8735-0ec4c5466d1c.mp4",
+      "videoLink": "",
+      "featured": true
     }
   ]
 }
