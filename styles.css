@@ -113,3 +113,6 @@ nav a[aria-current]::after{display:none}
   .featured-grid{grid-template-columns:repeat(var(--desktop-columns,4),minmax(0,1fr))}
   .year-group .featured-grid:has(>.project-card:only-child){max-width:none;grid-template-columns:repeat(var(--desktop-columns,4),minmax(0,1fr))}
 }
+
+/* Play mark for project introduction video links. */
+.video-play-icon{display:block;flex:0 0 auto;width:1.5rem;height:1.5rem}
