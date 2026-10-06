@@ -102,7 +102,7 @@ html{scroll-padding-top:6.25rem}
 
 /* Scale desktop typography, media, spacing and content width together. */
 html{font-size:16px}
-@media(min-width:1000px){html{font-size:20px}}
+@media(min-width:1000px){html{font-size:18px}}
 
 /* Keep the current navigation destination visible, including reduced motion. */
 nav a[aria-current]{color:var(--accent);font-weight:600;text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:.5em}
