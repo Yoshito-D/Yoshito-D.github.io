@@ -209,17 +209,7 @@
 // Prepare fades only outside the viewport; leave initially visible content alone.
 (() => {
   const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
-  if (preference.matches || !('IntersectionObserver' in window)) return;
-
-  // Stagger cards within each visible row.
-  document.querySelectorAll('.featured-grid').forEach((grid) => {
-    let rowTop;
-    let position = 0;
-    grid.querySelectorAll('.project-card').forEach((card) => {
-      if (card.offsetTop !== rowTop) { rowTop = card.offsetTop; position = 0; }
-      card.style.setProperty('--motion-delay', Math.min(position++, 3) * 100 + 'ms');
-    });
-  });
+  if (preference.matches) return;
   document.querySelectorAll('.profile-section .reading, .profile-section h1').forEach((element) => element.setAttribute('data-motion', ''));
   document.querySelectorAll('.profile-section .role').forEach((element) => {
     element.setAttribute('data-motion', '');
@@ -229,43 +219,109 @@
   });
 
   const targets = [...document.querySelectorAll('[data-motion], .profile-section .eyebrow, .back-link, .all-works-link, .section-heading, .project-card, .year-group > h3, .work-category > h2, .detail > h1, .detail-media, .detail-section, footer')];
-  const outside = element => {
-    const rect = element.getBoundingClientRect();
-    // Ignore the entrance translation when checking viewport boundaries.
-    const transform = getComputedStyle(element).transform;
-    const shift = transform === 'none' ? 0 : new DOMMatrixReadOnly(transform).m42;
-    return rect.bottom - shift <= 0 || rect.top - shift >= window.innerHeight;
+  const grids = [...document.querySelectorAll('.featured-grid')];
+  let active = true;
+  let frame = 0;
+  let observer;
+  let layoutObserver;
+  const show = element => element.classList.remove('motion-pending', 'motion-enter');
+  const stop = () => {
+    active = false;
+    targets.forEach(show);
+    window.cancelAnimationFrame(frame);
+    frame = 0;
+    observer?.disconnect();
+    layoutObserver?.disconnect();
+    window.removeEventListener('scroll', schedule);
+    window.removeEventListener('resize', schedule);
+    window.removeEventListener('pageshow', restore);
+    document.removeEventListener('load', schedule, true);
+    document.removeEventListener('visibilitychange', restore);
+    document.removeEventListener('works-filter-change', restore);
+    document.removeEventListener('focusin', focus);
+    preference.removeEventListener('change', reduce);
   };
-  const prepare = element => {
-    // Filtering may temporarily hide an entire group; wait until it has layout.
-    if (!element.getClientRects().length) return;
-    if (outside(element)) {
-      element.classList.remove('motion-enter');
-      element.classList.add('motion-pending');
-    } else if (element.classList.contains('motion-pending')) {
-      element.classList.remove('motion-pending');
-      element.classList.add('motion-enter');
+  const refresh = () => {
+    frame = 0;
+    if (!active) return;
+    try {
+      // Read layout before changing classes. Also ignore entrance shifts on ancestors.
+      const shifts = new Map();
+      const states = targets.map(element => {
+        if (!element.getClientRects().length || element.contains(document.activeElement)) return [element, null];
+        const rect = element.getBoundingClientRect();
+        let shift = 0;
+        for (let parent = element; parent; parent = parent.parentElement) {
+          if (!parent.classList.contains('motion-enter')) continue;
+          if (!shifts.has(parent)) {
+            const transform = getComputedStyle(parent).transform;
+            shifts.set(parent, transform === 'none' ? 0 : new DOMMatrixReadOnly(transform).m42);
+          }
+          shift += shifts.get(parent);
+        }
+        return [element, rect.bottom - shift <= 0 || rect.top - shift >= window.innerHeight];
+      });
+      // Keep the shared 100ms row stagger correct after resizing or filtering.
+      grids.forEach(grid => {
+        let rowTop;
+        let position = 0;
+        grid.querySelectorAll('.project-card').forEach(card => {
+          if (!card.getClientRects().length) return;
+          if (card.offsetTop !== rowTop) { rowTop = card.offsetTop; position = 0; }
+          card.style.setProperty('--motion-delay', Math.min(position++, 3) * 100 + 'ms');
+        });
+      });
+      states.forEach(([element, outside]) => {
+        if (outside === null) show(element);
+        else if (outside) {
+          element.classList.remove('motion-enter');
+          element.classList.add('motion-pending');
+        } else if (element.classList.contains('motion-pending')) {
+          element.classList.remove('motion-pending');
+          element.classList.add('motion-enter');
+        }
+      });
+    } catch {
+      stop(); // A failed enhancement must never leave the page invisible.
     }
   };
-  const observer = new IntersectionObserver(entries => {
-    for (const entry of entries) prepare(entry.target);
-  }, { threshold: 0 });
-  targets.forEach(element => { prepare(element); observer.observe(element); });
-
-  // Recheck synchronously after filtering, before the browser paints moved cards.
-  const refresh = () => targets.forEach(prepare);
-  document.addEventListener('works-filter-change', refresh);
-  const focus = event => {
-    targets.filter(element => element.contains(event.target)).forEach(element => {
-      element.classList.remove('motion-pending', 'motion-enter');
-    });
+  const schedule = () => {
+    try {
+      if (active && !frame) frame = window.requestAnimationFrame(refresh);
+    } catch {
+      stop();
+    }
   };
-  document.addEventListener('focusin', focus);
-  preference.addEventListener('change', event => {
-    if (!event.matches) return;
-    observer.disconnect();
-    document.removeEventListener('works-filter-change', refresh);
-    document.removeEventListener('focusin', focus);
-    targets.forEach(element => element.classList.remove('motion-pending', 'motion-enter'));
-  });
+  const restore = () => {
+    window.cancelAnimationFrame(frame);
+    refresh();
+  };
+  const focus = event => {
+    targets.filter(element => element.contains(event.target)).forEach(show);
+  };
+  const reduce = event => { if (event.matches) stop(); };
+  try {
+    // threshold: 0 can report an edge touch and then miss the first visible pixel.
+    // Scroll/layout events are authoritative; observer notifications are extra hints.
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', schedule, { passive: true });
+    window.addEventListener('pageshow', restore);
+    document.addEventListener('load', schedule, true);
+    document.addEventListener('visibilitychange', restore);
+    document.addEventListener('works-filter-change', restore);
+    document.addEventListener('focusin', focus);
+    preference.addEventListener('change', reduce);
+    if ('IntersectionObserver' in window) {
+      observer = new IntersectionObserver(schedule, { threshold: 0 });
+      targets.forEach(element => observer.observe(element));
+    }
+    if ('ResizeObserver' in window) {
+      layoutObserver = new ResizeObserver(schedule);
+      layoutObserver.observe(document.body);
+      targets.forEach(element => layoutObserver.observe(element));
+    }
+    refresh();
+  } catch {
+    stop();
+  }
 })();

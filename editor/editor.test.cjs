@@ -177,8 +177,8 @@ test('local editor uploads, recovers drafts, creates pages and commits/pushes on
   assert.ok((await (await fetch(`${base}/preview/works.html`)).text()).includes('data-tag="自由な新タグ"'));
   assert.equal((await fetch(`${base}/preview/${upload.data.path}`)).status, 200);
   const recovery = JSON.parse(await fs.readFile(path.join(root, '.editor/draft.json'), 'utf8'));
-  assert.equal(recovery.content.projects.length, 10);
-  assert.equal(JSON.parse(await fs.readFile(path.join(root, 'site-content.json'), 'utf8')).projects.length, 9);
+  assert.equal(recovery.content.projects.length, original.projects.length + 1);
+  assert.equal(JSON.parse(await fs.readFile(path.join(root, 'site-content.json'), 'utf8')).projects.length, original.projects.length);
   const published = await post('save', { content, revision: state.revision });
   assert.equal(published.status, 200, JSON.stringify(published.data));
   assert.equal(published.data.published, true, published.data.message);
