@@ -2,12 +2,12 @@
   "version": 1,
   "desktopColumns": 2,
   "pageUpdatedAt": {
-    "profile": "2026-10-05",
-    "works": "2026-10-05"
+    "profile": "2026-10-07",
+    "works": "2026-10-07"
   },
   "aura": {
-    "color": "#619629",
-    "accentColor": "#064730",
+    "color": "#66c0f4",
+    "accentColor": "#2a475e",
     "saturation": 122,
     "brightness": 14,
     "speed": 40
@@ -51,7 +51,7 @@
           "alt": ""
         }
       ],
-      "updatedAt": "2026-10-06",
+      "updatedAt": "2026-10-07",
       "video": "assets/uploads/43eb7632-6a05-48b1-8d95-0fb02f30b634.mp4",
       "videoLink": "https://youtu.be/9jMRl-FLWpU",
       "featured": true
@@ -83,7 +83,7 @@
           "alt": ""
         }
       ],
-      "updatedAt": "2026-10-06",
+      "updatedAt": "2026-10-07",
       "video": "assets/uploads/3602b70e-d0be-49c4-b826-941806d86faa.mp4",
       "videoLink": "https://youtu.be/CHORKg71XII",
       "featured": true
@@ -123,7 +123,7 @@
           "alt": ""
         }
       ],
-      "updatedAt": "2026-10-06",
+      "updatedAt": "2026-10-07",
       "video": "assets/uploads/b02f4aee-77ad-4b39-abcc-5685025b9a80.mp4",
       "videoLink": "https://youtu.be/6cN_TMcCHyo",
       "featured": true
@@ -159,7 +159,7 @@
           "alt": ""
         }
       ],
-      "updatedAt": "2026-10-06",
+      "updatedAt": "2026-10-07",
       "video": "assets/uploads/e78832ae-fff1-4b4f-a140-f1aaaa937db3.mp4",
       "videoLink": "https://youtu.be/KnK7j0mC-GA",
       "featured": false
@@ -195,7 +195,7 @@
           "alt": ""
         }
       ],
-      "updatedAt": "2026-10-06",
+      "updatedAt": "2026-10-07",
       "video": "assets/uploads/2a6b4c07-1e13-429f-bd66-3efc46d43286.mp4",
       "videoLink": "https://youtu.be/NJxmCPfJzWY",
       "featured": false
@@ -232,7 +232,7 @@
           "alt": ""
         }
       ],
-      "updatedAt": "2026-10-06",
+      "updatedAt": "2026-10-07",
       "video": "assets/uploads/e41c4137-837e-4e1e-bd0e-b257d435e3ed.mp4",
       "videoLink": "https://youtu.be/BiXqVUqQiGc",
       "featured": true
@@ -270,7 +270,7 @@
           "alt": ""
         }
       ],
-      "updatedAt": "2026-10-06",
+      "updatedAt": "2026-10-07",
       "video": "assets/uploads/f5231a18-ec42-4fd3-b030-5499ee698dd2.mp4",
       "videoLink": "https://youtu.be/trYte042MWw",
       "featured": true
@@ -306,7 +306,7 @@
           "alt": ""
         }
       ],
-      "updatedAt": "2026-10-06",
+      "updatedAt": "2026-10-07",
       "video": "assets/uploads/04de34fb-7def-4826-b217-8b747b8817fb.mp4",
       "videoLink": "https://youtu.be/xxBRqNyJFi0",
       "featured": false
@@ -347,7 +347,7 @@
           "alt": ""
         }
       ],
-      "updatedAt": "2026-10-06",
+      "updatedAt": "2026-10-07",
       "video": "assets/uploads/ae859a89-72c4-48d8-b67c-bb354f950fc1.mp4",
       "videoLink": "https://youtu.be/Tlgr2ZYZp9o",
       "featured": false
@@ -385,7 +385,7 @@
           "alt": ""
         }
       ],
-      "updatedAt": "2026-10-06",
+      "updatedAt": "2026-10-07",
       "video": "assets/uploads/91347e0c-e5f2-43d9-8735-0ec4c5466d1c.mp4",
       "videoLink": "",
       "featured": true

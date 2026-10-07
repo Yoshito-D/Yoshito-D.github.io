@@ -1,6 +1,6 @@
 // Draw flowing translucent ribbons on the GPU, without moving or repainting content.
 (() => {
-  const defaults = { color: '#619629', accentColor: '#064730', saturation: 100, brightness: 40, speed: 70 };
+  const defaults = { color: '#66c0f4', accentColor: '#2a475e', saturation: 100, brightness: 40, speed: 70 };
   let settings = { ...defaults };
   let refresh = () => {};
   const applySettings = value => {
@@ -52,6 +52,7 @@
       #endif
       uniform vec2 resolution;
       uniform float time;
+      uniform vec3 backgroundColor;
       uniform vec3 auraColor;
       uniform vec3 accentColor;
       uniform float saturation;
@@ -84,7 +85,7 @@
           teal += (haze * .07 + veil * .06) * (.5 + .5 * sin(phase));
         }
         float fade = smoothstep(0., .18, uv.y) * smoothstep(0., .16, 1. - uv.y);
-        vec3 color = vec3(.06667, .08235, .07843);
+        vec3 color = backgroundColor;
         vec3 light = auraColor * vec3(.605263, .677966, .46875) * (mist + folds)
                    + auraColor * edges + accentColor * teal;
         float luminance = dot(light, vec3(.2126, .7152, .0722));
@@ -116,6 +117,7 @@
   gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
   const resolution = gl.getUniformLocation(program, 'resolution');
   const time = gl.getUniformLocation(program, 'time');
+  const background = gl.getUniformLocation(program, 'backgroundColor');
   const color = gl.getUniformLocation(program, 'auraColor');
   const accent = gl.getUniformLocation(program, 'accentColor');
   const saturation = gl.getUniformLocation(program, 'saturation');
@@ -157,6 +159,7 @@
   refresh = () => {
     if (lost) return;
     const rgb = value => new Float32Array(value.slice(1).match(/../g).map(part => parseInt(part, 16) / 255));
+    gl.uniform3fv(background, rgb(getComputedStyle(document.documentElement).getPropertyValue('--bg').trim()));
     gl.uniform3fv(color, rgb(settings.color));
     gl.uniform3fv(accent, rgb(settings.accentColor));
     gl.uniform1f(saturation, settings.saturation / 100);
