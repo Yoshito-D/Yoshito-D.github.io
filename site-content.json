@@ -1,9 +1,10 @@
 {
   "version": 1,
   "desktopColumns": 2,
+  "cardStyle": "wire",
   "pageUpdatedAt": {
-    "profile": "2026-10-07",
-    "works": "2026-10-07"
+    "profile": "2026-10-08",
+    "works": "2026-10-08"
   },
   "aura": {
     "color": "#66c0f4",

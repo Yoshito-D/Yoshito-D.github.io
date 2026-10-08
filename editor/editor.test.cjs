@@ -137,6 +137,7 @@ test('local editor uploads, recovers drafts, creates pages and commits/pushes on
   git('init', '-b', 'main'); git('config', 'user.name', 'Editor Test'); git('config', 'user.email', 'editor-test@example.invalid');
   git('init', '--bare', remote); git('remote', 'add', 'origin', remote);
   const original = validateContent(readContent());
+  original.cardStyle = 'standard';
   // Use synthetic media in this temporary repository, not the user's assets.
   original.projects.forEach(project => { project.images = []; project.video = ''; project.updatedAt = '2026-10-01'; });
   original.pageUpdatedAt = { profile: '2026-10-01', works: '2026-10-01' };
@@ -170,14 +171,17 @@ test('local editor uploads, recovers drafts, creates pages and commits/pushes on
   assert.equal(secondUpload.status, 200);
   assert.equal((await post('upload', Buffer.from('not an image'), { 'Content-Type': 'application/octet-stream', 'X-File-Extension': 'png' })).status, 400);
   const content = structuredClone(original);
+  content.cardStyle = 'wire';
   const images = [{ src: upload.data.path, alt: '先頭画像' }, { src: secondUpload.data.path, alt: '2枚目' }];
   content.projects.push({ ...content.projects[0], id: 'new-project', title: '新しい作品', tags: ['自由な新タグ'], achievements: ['追加した実績'], images, videoLink: 'https://example.com/new-video', featured: true });
   const preview = await post('preview', { content, revision: state.revision });
   assert.equal(preview.status, 200);
   assert.ok((await (await fetch(`${base}/preview/works.html`)).text()).includes('data-tag="自由な新タグ"'));
+  assert.ok((await (await fetch(`${base}/preview/index.html`)).text()).includes('class="card-hanger"'));
   assert.equal((await fetch(`${base}/preview/${upload.data.path}`)).status, 200);
   const recovery = JSON.parse(await fs.readFile(path.join(root, '.editor/draft.json'), 'utf8'));
   assert.equal(recovery.content.projects.length, original.projects.length + 1);
+  assert.equal(recovery.content.cardStyle, 'wire');
   assert.equal(JSON.parse(await fs.readFile(path.join(root, 'site-content.json'), 'utf8')).projects.length, original.projects.length);
   const published = await post('save', { content, revision: state.revision });
   assert.equal(published.status, 200, JSON.stringify(published.data));
@@ -186,6 +190,8 @@ test('local editor uploads, recovers drafts, creates pages and commits/pushes on
   assert.ok((await fs.readFile(path.join(root, 'projects/new-project.html'), 'utf8')).includes('追加した実績'));
   assert.ok((await fs.readFile(path.join(root, 'projects/new-project.html'), 'utf8')).includes('href="https://example.com/new-video"'));
   assert.equal(published.data.content.projects.at(-1).videoLink, 'https://example.com/new-video');
+  assert.equal(published.data.content.cardStyle, 'wire');
+  assert.equal(JSON.parse(await fs.readFile(path.join(root, 'site-content.json'), 'utf8')).cardStyle, 'wire');
   assert.deepEqual(published.data.content.projects.at(-1).images, images);
   assert.equal(published.data.content.projects.at(-1).updatedAt, today());
   assert.equal(published.data.content.projects[0].updatedAt, '2026-10-01');
@@ -234,4 +240,32 @@ test('desktop columns migrate, validate, persist and update both card pages', ()
     assert.equal(updated.pageUpdatedAt.works, '2026-10-06');
   }
   for (const value of [0, 5, 2.5, '4']) assert.throws(() => validateContent({ ...input, desktopColumns: value }));
+});
+
+test('card styles migrate safely and change only the two pages containing cards', () => {
+  const input = readContent();
+  delete input.cardStyle;
+  const standard = validateContent(input);
+  assert.equal(standard.cardStyle, 'standard');
+  standard.pageUpdatedAt = { profile: '2026-10-01', works: '2026-10-01' };
+  standard.projects.forEach(project => { project.updatedAt = '2026-10-01'; });
+  const wire = stampUpdates({ ...standard, cardStyle: 'wire' }, standard, '2026-10-08');
+  const plainPages = renderSite(standard), wirePages = renderSite(wire);
+  assert.deepEqual(wire.pageUpdatedAt, { profile: '2026-10-08', works: '2026-10-08' });
+  for (const name of ['index.html', 'works.html']) {
+    const html = wirePages.get(name);
+    assert.ok(html.includes('project-card-wire'));
+    assert.ok(html.includes('class="card-hanger" aria-hidden="true"'));
+    assert.ok(html.includes('class="card-eyelet card-eyelet-left"'));
+    assert.ok(!plainPages.get(name).includes('card-hanger'));
+    assert.equal((html.match(/class="project-link"/g) || []).length, (plainPages.get(name).match(/class="project-link"/g) || []).length);
+  }
+  for (const project of wire.projects) {
+    assert.equal(project.updatedAt, '2026-10-01');
+    assert.equal(wirePages.get(`projects/${project.id}.html`), plainPages.get(`projects/${project.id}.html`));
+  }
+  const switchedBack = stampUpdates({ ...wire, cardStyle: 'standard' }, wire, '2026-10-09');
+  assert.deepEqual(switchedBack.pageUpdatedAt, { profile: '2026-10-09', works: '2026-10-09' });
+  assert.ok(!renderSite(switchedBack).get('works.html').includes('card-hanger'));
+  for (const cardStyle of ['chain', 'WIRE', 1, {}, []]) assert.throws(() => validateContent({ ...input, cardStyle }), /カードのデザイン/);
 });

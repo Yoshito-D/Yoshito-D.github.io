@@ -3,7 +3,7 @@ const path = require('node:path');
 
 const ROOT = path.resolve(__dirname, '../..');
 const CONTENT = 'site-content.json';
-const VERSION = '20261007-steam-palette';
+const VERSION = '20261008-wire-cards';
 const DEFAULT_AURA = Object.freeze({ color: '#66c0f4', accentColor: '#2a475e', saturation: 100, brightness: 40, speed: 70 });
 const INITIAL_DATE = '2026-10-05';
 const today = () => new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Tokyo', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
@@ -35,6 +35,8 @@ function validateContent(input) {
   };
   const desktopColumns = input.desktopColumns ?? 3;
   if (!Number.isInteger(desktopColumns) || desktopColumns < 1 || desktopColumns > 4) throw new Error('PCのカード列数は1〜4列から選択してください。');
+  const cardStyle = input.cardStyle ?? 'standard';
+  if (!['standard', 'wire'].includes(cardStyle)) throw new Error('カードのデザインは「通常」または「ワイヤー吊り」から選択してください。');
   const sourceAura = input.aura ?? DEFAULT_AURA;
   if (!sourceAura || typeof sourceAura !== 'object' || Array.isArray(sourceAura)) throw new Error('背景のオーラの設定を確認してください。');
   const aura = {};
@@ -88,7 +90,7 @@ function validateContent(input) {
     project.featured = item.featured === true;
     return project;
   });
-  return { version: 1, desktopColumns, pageUpdatedAt: { profile: date(input.pageUpdatedAt?.profile), works: date(input.pageUpdatedAt?.works) }, aura, profile, worksIntro: string(input.worksIntro, '作品一覧の紹介文'), projects };
+  return { version: 1, desktopColumns, cardStyle, pageUpdatedAt: { profile: date(input.pageUpdatedAt?.profile), works: date(input.pageUpdatedAt?.works) }, aura, profile, worksIntro: string(input.worksIntro, '作品一覧の紹介文'), projects };
 }
 
 // Compare the actual page content with fixed dates so unrelated pages keep their date.
@@ -139,8 +141,11 @@ function shell(content, title, body, detail = false, filters = false, updatedAt 
   return `<!DOCTYPE html>\n<html lang="ja"><head>${metadata}<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#171a21"><title>${escape(content.profile.name)} | ${escape(title)}</title><link rel="stylesheet" href="${prefix}styles.css?v=${VERSION}">${detail ? `<script src="../gallery.js?v=${VERSION}" defer></script>` : `<script src="${prefix}preview.js?v=20261005-mobile-preview" defer></script>`}<script src="${prefix}motion.js?v=${VERSION}" defer></script>${filters ? '<script src="filters.js?v=20261002-tag-and" defer></script>' : ''}</head><body data-aura="${escape(JSON.stringify(content.aura))}" style="${auraStyle(content.aura)};--desktop-columns:${content.desktopColumns}"><a class="skip-link" href="#main">本文へ移動</a><header class="site-header"><a class="brand" href="${title === 'プロフィール' ? '#' : home}" aria-label="トップへ">Portfolio</a><nav aria-label="メインナビゲーション"><a href="${title === 'プロフィール' ? '#about' : `${home}#about`}"${title === 'プロフィール' ? ' aria-current="page"' : ''}>プロフィール</a><a href="${works}"${filters ? ' aria-current="page"' : detail ? ' aria-current="location"' : ''}>作品一覧</a></nav></header>${body}<footer><a href="#">ページの先頭へ <span class="link-arrow" aria-hidden="true">↑</span></a>${updateLabel(updatedAt, false)}</footer></body></html>\n`;
 }
 
-function card(project, heading = 'h3') {
-  return `<article class="project-card" data-dimension="${escape(project.dimension)}" data-genre="${escape(project.genre)}" data-production="${escape(project.production)}" data-year="${escape(project.year)}"><a class="project-link" href="projects/${project.id}.html"><div class="empty-media" data-preview="${escape(project.video)}" aria-hidden="true">${project.images[0] ? `<img src="${escape(project.images[0].src)}" alt="" loading="lazy">` : ''}</div><${heading} class="project-title">${escape(project.title)}</${heading}><div class="project-meta">${tagList(project)}${achievements(project)}</div></a></article>`;
+function card(project, heading = 'h3', cardStyle = 'standard') {
+  const wire = cardStyle === 'wire';
+  const hanger = wire ? '<div class="card-hanger" aria-hidden="true"><span class="card-pin"></span><span class="card-wire card-wire-left"></span><span class="card-wire card-wire-right"></span></div>' : '';
+  const eyelets = wire ? '<span class="card-eyelet card-eyelet-left" aria-hidden="true"></span><span class="card-eyelet card-eyelet-right" aria-hidden="true"></span>' : '';
+  return `<article class="project-card${wire ? ' project-card-wire' : ''}" data-dimension="${escape(project.dimension)}" data-genre="${escape(project.genre)}" data-production="${escape(project.production)}" data-year="${escape(project.year)}">${hanger}<a class="project-link" href="projects/${project.id}.html">${eyelets}<div class="empty-media" data-preview="${escape(project.video)}" aria-hidden="true">${project.images[0] ? `<img src="${escape(project.images[0].src)}" alt="" loading="lazy">` : ''}</div><${heading} class="project-title">${escape(project.title)}</${heading}><div class="project-meta">${tagList(project)}${achievements(project)}</div></a></article>`;
 }
 
 function renderSite(content) {
@@ -154,7 +159,7 @@ function renderSite(content) {
   const toolIcons = profile.tools.map(key => { const [name, file, cls] = tools[key]; return `<li><img${cls ? ` class="${cls}"` : ''} src="assets/tools/${file}" alt="${name}" title="${name}" width="48" height="48"></li>`; }).join('');
   const information = [['所属', profile.school], ['卒業予定', profile.graduation], ['趣味', profile.hobby], ['Email', profile.email]].map(([label, value]) => `<div><dt>${label}</dt><dd>${label === 'Email' && value ? `<a class="email-link" href="mailto:${escape(value)}">${escape(value)}</a>` : textLines(value)}</dd></div>`).join('');
   const pages = new Map();
-  pages.set('index.html', shell(content, 'プロフィール', `<main id="main"><section id="about" class="profile-section" aria-labelledby="profile-title"><div><p class="eyebrow">PROFILE</p><p class="reading">${escape(profile.reading)}</p><h1 id="profile-title">${escape(profile.name)}</h1><p class="role">${escape(profile.role)}</p>${toolIcons ? `<div class="profile-tools" data-motion><p class="tools-label">使用ツール</p><ul class="tool-icons" aria-label="使用ツール">${toolIcons}</ul></div>` : ''}</div><div><dl class="profile">${information}</dl><p class="profile-description">${textLines(profile.description)}</p></div></section><section id="works" class="section" aria-labelledby="works-title"><div class="section-heading"><p class="eyebrow">SELECTED WORKS</p><h2 id="works-title">代表作品</h2></div><div class="featured-grid">${projects.filter(project => project.featured).map(project => card(project)).join('\n')}</div><a class="all-works-link" data-motion href="works.html">作品一覧を見る <span class="link-arrow" aria-hidden="true">→</span></a></section></main>`));
+  pages.set('index.html', shell(content, 'プロフィール', `<main id="main"><section id="about" class="profile-section" aria-labelledby="profile-title"><div><p class="eyebrow">PROFILE</p><p class="reading">${escape(profile.reading)}</p><h1 id="profile-title">${escape(profile.name)}</h1><p class="role">${escape(profile.role)}</p>${toolIcons ? `<div class="profile-tools" data-motion><p class="tools-label">使用ツール</p><ul class="tool-icons" aria-label="使用ツール">${toolIcons}</ul></div>` : ''}</div><div><dl class="profile">${information}</dl><p class="profile-description">${textLines(profile.description)}</p></div></section><section id="works" class="section" aria-labelledby="works-title"><div class="section-heading"><p class="eyebrow">SELECTED WORKS</p><h2 id="works-title">代表作品</h2></div><div class="featured-grid">${projects.filter(project => project.featured).map(project => card(project, 'h3', content.cardStyle)).join('\n')}</div><a class="all-works-link" data-motion href="works.html">作品一覧を見る <span class="link-arrow" aria-hidden="true">→</span></a></section></main>`));
   const usedTags = [...new Set(projects.flatMap(tags))];
   const standardTags = ['個人制作', 'チーム制作', '1年次', '2年次', '3年次', '4年次', '5年次', '6年次', '7年次', '8年次', '9年次', '2D', '3D', 'アクション', 'シューティング', 'パズル'];
   const allTags = [...standardTags.filter(tag => usedTags.includes(tag)), ...usedTags.filter(tag => !standardTags.includes(tag))];
@@ -163,7 +168,7 @@ function renderSite(content) {
     const group = projects.filter(project => project.production === production);
     if (!group.length) return '';
     const years = [...new Set(group.map(project => project.year))].sort((a, b) => Number(b[0]) - Number(a[0]));
-    return `<section class="work-category" aria-labelledby="category-${index}"><h2 id="category-${index}">${production}</h2>${years.map(year => `<section class="year-group"><h3>${year}</h3><div class="featured-grid">${group.filter(project => project.year === year).map(project => card(project, 'h4')).join('\n')}</div></section>`).join('')}</section>`;
+    return `<section class="work-category" aria-labelledby="category-${index}"><h2 id="category-${index}">${production}</h2>${years.map(year => `<section class="year-group"><h3>${year}</h3><div class="featured-grid">${group.filter(project => project.year === year).map(project => card(project, 'h4', content.cardStyle)).join('\n')}</div></section>`).join('')}</section>`;
   }).join('');
   pages.set('works.html', shell(content, '作品一覧', `<main id="main"><section class="section"><div class="section-heading"><p class="eyebrow">WORKS</p><h1>作品一覧</h1><p class="profile-description">${textLines(content.worksIntro)}</p></div>${filter}${categories}</section></main>`, false, true));
   for (const project of projects) {

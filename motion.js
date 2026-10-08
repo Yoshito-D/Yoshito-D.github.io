@@ -209,6 +209,53 @@
   preference.addEventListener('change', () => header.classList.remove('is-scroll-hidden'));
 })();
 
+// Restart a short, damped swing on each new interaction with a wire sign.
+(() => {
+  const cards = [...document.querySelectorAll('.project-card-wire')];
+  if (!cards.length) return;
+  const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const active = new Map();
+  const steps = [[0, 0], [.14, -5], [.36, 2.5], [.58, -1], [.8, .3], [1, 0]];
+  const cancel = () => {
+    active.forEach(animations => animations.forEach(animation => animation.cancel()));
+    active.clear();
+  };
+  for (const card of cards) {
+    const link = card.querySelector('.project-link');
+    if (!link?.animate) continue;
+    const targets = [link, ...card.querySelectorAll('.card-wire')];
+    const start = () => {
+      if (preference.matches || document.hidden || card.hidden) return;
+      let animations = [];
+      try {
+        const initial = targets.map(target => getComputedStyle(target).transform);
+        active.get(card)?.forEach(animation => animation.cancel());
+        targets.forEach((target, index) => {
+          animations.push(target.animate(steps.map(([offset, angle]) => ({
+            offset, transform: offset === 0 ? initial[index] : `rotate(${angle}deg)`, easing: 'ease-in-out'
+          })), { duration: 1400, iterations: 1 }));
+        });
+        active.set(card, animations);
+        Promise.allSettled(animations.map(animation => animation.finished)).then(() => {
+          if (active.get(card) === animations) active.delete(card);
+        });
+      } catch {
+        animations.forEach(animation => animation.cancel());
+        active.get(card)?.forEach(animation => animation.cancel());
+        active.delete(card);
+      }
+    };
+    // The stationary article prevents its moving edges from retriggering hover.
+    card.addEventListener('pointerenter', start);
+    link.addEventListener('pointerdown', event => { if (event.pointerType !== 'mouse') start(); });
+    link.addEventListener('focus', start);
+  }
+  preference.addEventListener('change', event => { if (event.matches) cancel(); });
+  window.addEventListener('pagehide', cancel);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) cancel(); });
+  document.addEventListener('works-filter-change', cancel);
+})();
+
 // Prepare fades only outside the viewport; leave initially visible content alone.
 (() => {
   const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
