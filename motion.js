@@ -209,7 +209,7 @@
   preference.addEventListener('change', () => header.classList.remove('is-scroll-hidden'));
 })();
 
-// Restart a short, damped swing on each new interaction with a wire sign.
+// Restart a short, damped swing away from the touched side of a wire sign.
 (() => {
   const cards = [...document.querySelectorAll('.project-card-wire')];
   if (!cards.length) return;
@@ -224,15 +224,18 @@
     const link = card.querySelector('.project-link');
     if (!link?.animate) continue;
     const targets = [link, ...card.querySelectorAll('.card-wire')];
-    const start = () => {
+    const start = event => {
       if (preference.matches || document.hidden || card.hidden) return;
       let animations = [];
       try {
+        // Read the stationary card so an ongoing swing cannot flip the contact side.
+        const rect = card.getBoundingClientRect();
+        const direction = event && event.clientX > rect.left + rect.width / 2 ? -1 : 1;
         const initial = targets.map(target => getComputedStyle(target).transform);
         active.get(card)?.forEach(animation => animation.cancel());
         targets.forEach((target, index) => {
           animations.push(target.animate(steps.map(([offset, angle]) => ({
-            offset, transform: offset === 0 ? initial[index] : `rotate(${angle}deg)`, easing: 'ease-in-out'
+            offset, transform: offset === 0 ? initial[index] : `rotate(${angle * direction}deg)`, easing: 'ease-in-out'
           })), { duration: 1400, iterations: 1 }));
         });
         active.set(card, animations);
@@ -246,9 +249,10 @@
       }
     };
     // The stationary article prevents its moving edges from retriggering hover.
-    card.addEventListener('pointerenter', start);
-    link.addEventListener('pointerdown', event => { if (event.pointerType !== 'mouse') start(); });
-    link.addEventListener('focus', start);
+    card.addEventListener('pointerenter', event => { if (event.pointerType !== 'touch') start(event); });
+    link.addEventListener('pointerdown', event => { if (event.pointerType !== 'mouse') start(event); });
+    // Pointer-generated focus must not replace the direction chosen by the contact.
+    link.addEventListener('focus', () => { if (link.matches(':focus-visible')) start(); });
   }
   preference.addEventListener('change', event => { if (event.matches) cancel(); });
   window.addEventListener('pagehide', cancel);
