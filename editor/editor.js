@@ -26,11 +26,27 @@
     if (!persistent) messageTimer = setTimeout(() => { message.hidden = true; }, 7000);
   };
   async function api(route, body, headers = {}) {
-    const response = await fetch(`/api/${route}`, body === undefined ? {} : {
-      method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Editor-Token': token, ...headers }, body: headers['Content-Type'] === 'application/octet-stream' ? body : JSON.stringify(body)
-    });
-    const result = await response.json();
-    if (!response.ok) throw new Error(result.error || '通信できませんでした。');
+    const request = async () => {
+      try {
+        return await fetch(`/api/${route}`, body === undefined ? {} : {
+          method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Editor-Token': token, ...headers }, body: headers['Content-Type'] === 'application/octet-stream' ? body : JSON.stringify(body)
+        });
+      } catch {
+        throw new Error('編集サーバーに接続できません。「編集画面を開く.cmd」で起動し、もう一度お試しください。');
+      }
+    };
+    let response = await request();
+    // A new server rejects the old token before processing the submission.
+    if (response.status === 403 && body !== undefined) {
+      const session = await api('content');
+      if (session.revision !== revision) throw new Error('保存内容が更新されています。編集画面を再読み込みしてください。');
+      if (session.token !== token) {
+        token = session.token;
+        response = await request();
+      }
+    }
+    const result = await response.json().catch(() => null);
+    if (!response.ok || !result) throw new Error(result?.error || '編集サーバーの応答を読み取れませんでした。');
     return result;
   }
   function updateStatus() {
@@ -371,5 +387,9 @@
     savedFingerprint = JSON.stringify(result.savedContent);
     choose(null); updateStatus(); syncAura();
     if (result.hasDraft) notice('前回の下書きを復元しました。プレビューを確認してから公開できます。', false, true);
-  }).catch(cause => { $('#draft-status').textContent = '読み込み失敗'; notice(`編集画面を開く.cmdから起動してください。\n${cause.message}`, true, true); });
+  }).catch(cause => {
+    $('#draft-status').textContent = '読み込み失敗';
+    const hint = location.hostname === '127.0.0.1' ? cause.message : 'このPCの「編集画面を開く.cmd」から起動してください。';
+    notice(hint, true, true);
+  });
 })();

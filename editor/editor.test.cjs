@@ -156,6 +156,7 @@ test('local editor uploads, recovers drafts, creates pages and commits/pushes on
     await fs.rm(folder, { recursive: true, force: true });
   });
   const base = `http://127.0.0.1:${server.address().port}`;
+  assert.deepEqual(await (await fetch(`${base}/api/health`)).json(), { editor: 'portfolio' });
   let state = await (await fetch(`${base}/api/content`)).json();
   const post = async (route, body, overrides = {}) => {
     const response = await fetch(`${base}/api/${route}`, { method: 'POST', headers: { Origin: base, 'Content-Type': 'application/json', 'X-Editor-Token': state.token, ...overrides }, body: Buffer.isBuffer(body) ? body : JSON.stringify(body) });
@@ -202,8 +203,16 @@ test('local editor uploads, recovers drafts, creates pages and commits/pushes on
   assert.equal((await post('save', { content, revision: state.revision })).status, 409);
   state = await (await fetch(`${base}/api/content`)).json();
   await fs.appendFile(path.join(root, 'index.html'), '\nmanual change');
+  content.projects[0].description += '\n保存ボタンから送った下書き';
   assert.equal((await post('save', { content, revision: state.revision })).status, 400);
   assert.ok((await fs.readFile(path.join(root, 'index.html'), 'utf8')).endsWith('manual change'));
+  const blockedDraft = JSON.parse(await fs.readFile(path.join(root, '.editor/draft.json'), 'utf8'));
+  assert.equal(blockedDraft.revision, state.revision);
+  assert.equal(blockedDraft.content.projects[0].description, content.projects[0].description);
+  const afterBlockedSave = await (await fetch(`${base}/api/content`)).json();
+  assert.equal(afterBlockedSave.hasDraft, true);
+  assert.equal(afterBlockedSave.content.projects[0].description, content.projects[0].description);
+  assert.equal(afterBlockedSave.savedContent.projects[0].description, state.savedContent.projects[0].description);
   await fs.writeFile(path.join(root, 'index.html'), renderSite(state.savedContent).get('index.html').replace(/\n/g, '\r\n'));
   // A remote rejection must preserve local edits and offer a successful retry.
   const hook = path.join(remote, 'hooks/pre-receive');

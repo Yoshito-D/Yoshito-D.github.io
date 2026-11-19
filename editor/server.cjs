@@ -3,10 +3,12 @@ const fs = require('node:fs/promises');
 const path = require('node:path');
 const os = require('node:os');
 const crypto = require('node:crypto');
-const { execFile } = require('node:child_process');
+const { execFile, spawn } = require('node:child_process');
+const { setTimeout: delay } = require('node:timers/promises');
 const { promisify } = require('node:util');
 const { ROOT, CONTENT, DEFAULT_AURA, validateContent, renderSite, stampUpdates } = require('./lib/site.cjs');
 const execute = promisify(execFile);
+const HOST = '127.0.0.1';
 const hash = value => crypto.createHash('sha256').update(value).digest('hex');
 const serialize = value => JSON.stringify(value, null, 2) + '\n';
 const mime = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.gif': 'image/gif', '.avif': 'image/avif', '.mp4': 'video/mp4' };
@@ -72,12 +74,18 @@ async function createEditor({ root = ROOT } = {}) {
       catch { try { await fs.access(path.join(local, 'uploads', path.basename(name))); } catch { throw error('画像・動画が見つかりません。ファイルを選び直してください。'); } }
     }
   };
+  const storeDraft = async content => {
+    const pages = renderSite(content);
+    await atomicWrite(root, '.editor/draft.json', serialize({ revision, content }));
+    draft = content;
+    preview = pages;
+  };
 
   const server = http.createServer(async (req, res) => {
     let ownsMutation = false;
     try {
       const address = server.address();
-      const host = `127.0.0.1:${address.port}`;
+      const host = `${HOST}:${address.port}`;
       if (req.headers.host !== host) throw error('この編集画面はこのPCからのみ利用できます。', 403);
       const url = new URL(req.url, `http://${host}`);
       const name = decodeURIComponent(url.pathname).replace(/^\//, '');
@@ -98,9 +106,7 @@ async function createEditor({ root = ROOT } = {}) {
         if (name === 'api/preview') {
           const input = await json(req);
           if (input.revision !== revision || hash(await fs.readFile(contentPath, 'utf8')) !== revision) throw error('別の画面で保存されています。編集画面を再読み込みしてください。', 409);
-          draft = validateContent(input.content);
-          preview = renderSite(draft);
-          await atomicWrite(root, '.editor/draft.json', serialize({ revision, content: draft }));
+          await storeDraft(validateContent(input.content));
           return respond(res, 200, { ok: true });
         }
         if (name === 'api/discard') {
@@ -113,8 +119,10 @@ async function createEditor({ root = ROOT } = {}) {
         }
         if (name === 'api/save') {
           const input = await json(req);
-          const content = stampUpdates(input.content, saved);
           if (input.revision !== revision || hash(await fs.readFile(contentPath, 'utf8')) !== revision) throw error('保存内容が更新されています。画面を再読み込みしてください。', 409);
+          const submitted = validateContent(input.content);
+          await storeDraft(submitted);
+          const content = stampUpdates(submitted, saved);
           try {
             await checkAssets(content);
             if (await git('branch', '--show-current') !== 'main') throw error('mainブランチで編集画面を起動してください。');
@@ -176,6 +184,7 @@ async function createEditor({ root = ROOT } = {}) {
         throw error('操作が見つかりません。', 404);
       }
       if (req.method !== 'GET') throw error('操作が見つかりません。', 405);
+      if (name === 'api/health') return respond(res, 200, { editor: 'portfolio' });
       if (name === 'api/content') return respond(res, 200, { content: draft, savedContent: saved, auraDefaults: DEFAULT_AURA, revision, token, pendingPublish, hasDraft: serialize(draft) !== serialize(saved) });
       if (!name) { res.writeHead(302, { Location: '/editor/index.html', 'Cache-Control': 'no-store' }); return res.end(); }
       let file = name || 'editor/index.html';
@@ -199,12 +208,57 @@ async function createEditor({ root = ROOT } = {}) {
   return server;
 }
 
+function launchDetached(executable, args, stdio) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(executable, args, { cwd: ROOT, detached: true, windowsHide: true, stdio });
+    child.once('error', reject);
+    child.once('spawn', () => {
+      child.unref();
+      resolve();
+    });
+  });
+}
+
+async function openEditor(port) {
+  const url = `http://${HOST}:${port}/`;
+  const ready = async () => {
+    try {
+      const response = await fetch(url + 'api/health', { signal: AbortSignal.timeout(500) });
+      return response.ok && (await response.json()).editor === 'portfolio';
+    } catch { return false; }
+  };
+  if (!await ready()) {
+    const logPath = path.join(ROOT, '.editor', 'launcher.log');
+    await fs.mkdir(path.dirname(logPath), { recursive: true });
+    const log = await fs.open(logPath, 'a');
+    try {
+      // Keep the server alive after the launcher exits and reload it when the generator changes.
+      await launchDetached(process.execPath, ['--watch', __filename], ['ignore', log.fd, log.fd]);
+    } finally {
+      await log.close();
+    }
+    const deadline = Date.now() + 6000;
+    while (!await ready()) {
+      if (Date.now() >= deadline) throw error(`編集サーバーを起動できませんでした。起動ログ: ${logPath}`);
+      await delay(150);
+    }
+  }
+  await launchDetached('explorer.exe', [url], 'ignore');
+}
+
+async function main() {
+  const port = Number(process.env.PORT || 4174);
+  if (!Number.isInteger(port) || port < 1 || port > 65535) throw error('ポート番号が正しくありません。');
+  if (process.argv.includes('--open')) return openEditor(port);
+  const server = await createEditor();
+  server.on('error', cause => {
+    console.error(cause.code === 'EADDRINUSE' ? `ポート ${port} はすでに使用されています。` : cause.message);
+    process.exitCode = 1;
+  });
+  server.listen(port, HOST, () => console.log(`Portfolio editor: http://${HOST}:${port}/`));
+}
+
 if (require.main === module) {
-  createEditor().then(server => {
-    const port = Number(process.env.PORT || 4174);
-    const open = () => { if (process.argv.includes('--open')) execute('cmd.exe', ['/d', '/c', `start "" "http://127.0.0.1:${port}/"`], { windowsHide: true }).catch(cause => console.error(cause.message)); };
-    server.on('error', cause => { console.error(cause.code === 'EADDRINUSE' ? `編集画面は http://127.0.0.1:${port}/ です。すでに起動している画面をご利用ください。` : cause.message); if (cause.code === 'EADDRINUSE') open(); else process.exitCode = 1; });
-    server.listen(port, '127.0.0.1', () => { console.log(`Portfolio editor: http://127.0.0.1:${port}/\nKeep this window open. Press Ctrl+C to stop.`); open(); });
-  }).catch(cause => { console.error(cause.message); process.exitCode = 1; });
+  main().catch(cause => { console.error(cause.message); process.exitCode = 1; });
 }
 module.exports = { createEditor, atomicWrite };
