@@ -3,7 +3,7 @@ const path = require('node:path');
 
 const ROOT = path.resolve(__dirname, '../..');
 const CONTENT = 'site-content.json';
-const VERSION = '20261101-directional-swing';
+const VERSION = '20261119-pendulum-swing';
 const DEFAULT_AURA = Object.freeze({ color: '#66c0f4', accentColor: '#2a475e', saturation: 100, brightness: 40, speed: 70 });
 const INITIAL_DATE = '2026-10-05';
 const today = () => new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Tokyo', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
@@ -143,9 +143,10 @@ function shell(content, title, body, detail = false, filters = false, updatedAt 
 
 function card(project, heading = 'h3', cardStyle = 'standard') {
   const wire = cardStyle === 'wire';
-  const hanger = wire ? '<div class="card-hanger" aria-hidden="true"><span class="card-pin"></span><span class="card-wire card-wire-left"></span><span class="card-wire card-wire-right"></span></div>' : '';
+  const hanger = wire ? '<span class="card-pin" aria-hidden="true"></span><div class="card-hanger" aria-hidden="true"><span class="card-wire card-wire-left"></span><span class="card-wire card-wire-right"></span></div>' : '';
   const eyelets = wire ? '<span class="card-eyelet card-eyelet-left" aria-hidden="true"></span><span class="card-eyelet card-eyelet-right" aria-hidden="true"></span>' : '';
-  return `<article class="project-card${wire ? ' project-card-wire' : ''}" data-dimension="${escape(project.dimension)}" data-genre="${escape(project.genre)}" data-production="${escape(project.production)}" data-year="${escape(project.year)}">${hanger}<a class="project-link" href="projects/${project.id}.html">${eyelets}<div class="empty-media" data-preview="${escape(project.video)}" aria-hidden="true">${project.images[0] ? `<img src="${escape(project.images[0].src)}" alt="" loading="lazy">` : ''}</div><${heading} class="project-title">${escape(project.title)}</${heading}><div class="project-meta">${tagList(project)}${achievements(project)}</div></a></article>`;
+  const board = `${eyelets}<div class="empty-media" data-preview="${escape(project.video)}" aria-hidden="true">${project.images[0] ? `<img src="${escape(project.images[0].src)}" alt="" loading="lazy">` : ''}</div><${heading} class="project-title">${escape(project.title)}</${heading}><div class="project-meta">${tagList(project)}${achievements(project)}</div>`;
+  return `<article class="project-card${wire ? ' project-card-wire' : ''}" data-dimension="${escape(project.dimension)}" data-genre="${escape(project.genre)}" data-production="${escape(project.production)}" data-year="${escape(project.year)}">${hanger}<a class="project-link" href="projects/${project.id}.html">${wire ? `<div class="card-board">${board}</div>` : board}</a></article>`;
 }
 
 function renderSite(content) {

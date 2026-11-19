@@ -5,97 +5,161 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const source = fs.readFileSync(path.join(__dirname, '../motion.js'), 'utf8');
-const swing = source.slice(source.indexOf('// Restart a short'), source.indexOf('// Prepare fades'));
+const swing = source.slice(source.indexOf('// Transfer contact momentum'), source.indexOf('// Prepare fades'));
 
 function setup({ reduced = false } = {}) {
   const listeners = new Map();
   const events = owner => ({ addEventListener(name, callback) { listeners.set(`${owner}:${name}`, callback); } });
-  const animations = [];
-  const target = () => ({
-    transform: 'none',
-    animate(keyframes, options) {
-      const animation = { keyframes, options, cancelled: false, finished: new Promise(() => {}), cancel() { this.cancelled = true; } };
-      animations.push(animation);
-      return animation;
-    }
-  });
-  const link = { ...target(), ...events('link'), focusVisible: false, matches() { return this.focusVisible; } };
-  const wires = [target(), target()];
+  const frames = new Map();
+  let nextFrame = 0;
+  let time = 0;
+  let transform;
+  const link = {
+    ...events('link'), focusVisible: false,
+    matches() { return this.focusVisible; },
+    getBoundingClientRect: () => ({ left: 100, top: 50, width: 200, height: 200 })
+  };
   const card = {
-    ...events('card'), hidden: false,
-    getBoundingClientRect: () => ({ left: 100, width: 200 }),
-    querySelector: () => link, querySelectorAll: () => wires
+    hidden: false,
+    querySelector: () => link,
+    style: {
+      setProperty(_name, value) { transform = value; },
+      removeProperty() { transform = undefined; }
+    }
   };
   const preference = { ...events('media'), matches: reduced };
   const document = { ...events('document'), hidden: false, querySelectorAll: () => [card] };
   vm.runInNewContext(swing, {
-    document, window: { ...events('window'), matchMedia: () => preference },
-    getComputedStyle: node => ({ transform: node.transform })
+    document, performance: { now: () => time },
+    window: {
+      ...events('window'), matchMedia: () => preference,
+      requestAnimationFrame(callback) {
+        frames.set(++nextFrame, callback);
+        return nextFrame;
+      },
+      cancelAnimationFrame(id) { frames.delete(id); }
+    }
   });
   return {
-    animations, link, wires, card, preference, document,
-    event(owner, name, value = {}) { listeners.get(`${owner}:${name}`)?.(value); }
+    frames, link, card, document,
+    angles() { return transform && [...transform.matchAll(/rotate([XYZ])\(([-.\d]+)deg\)/g)].map(match => Number(match[2])); },
+    advance(milliseconds) {
+      time += milliseconds;
+      const pending = [...frames.values()];
+      frames.clear();
+      pending.forEach(callback => callback(time));
+    },
+    event(owner, name, value = {}) { listeners.get(`${owner}:${name}`)?.({ isPrimary: true, timeStamp: time, ...value }); },
+    hover(x, y) { this.event('link', 'pointerenter', { pointerType: 'mouse', clientX: x, clientY: y }); },
+    move(x, y) { this.event('document', 'pointermove', { pointerType: 'mouse', clientX: x, clientY: y }); },
+    tap(x, y) { this.event('link', 'pointerdown', { pointerType: 'touch', clientX: x, clientY: y }); }
   };
 }
 
-test('left and right contacts push the board away and keep both wires in sync', () => {
-  for (const [clientX, firstAngle] of [[100, -5], [300, 5]]) {
+test('left and right contacts swing away, then overshoot and settle', () => {
+  for (const [x, sign] of [[100, -1], [300, 1]]) {
     const page = setup();
-    page.event('card', 'pointerenter', { pointerType: 'mouse', clientX });
-    assert.equal(page.animations.length, 3);
-    for (const animation of page.animations) {
-      assert.equal(animation.keyframes[1].transform, `rotate(${firstAngle}deg)`);
-      assert.equal(animation.keyframes[2].transform, `rotate(${-firstAngle / 2}deg)`);
-      assert.equal(animation.keyframes.at(-1).transform, 'rotate(0deg)');
-      assert.equal(animation.options.duration, 1400);
-    }
+    page.hover(x, 150);
+    page.advance(95);
+    const [roll, yaw, pitch] = page.angles();
+    assert.equal(Math.sign(roll), sign);
+    assert.equal(Math.sign(yaw), sign);
+    assert.equal(pitch, 0);
+    page.advance(250);
+    assert.equal(Math.sign(page.angles()[0]), -sign);
+    assert.ok(Math.abs(page.angles()[0]) < Math.abs(roll));
+    page.advance(1500);
+    assert.equal(page.angles(), undefined);
+    assert.equal(page.frames.size, 0);
   }
 });
 
-test('touch starts once with its contact direction and pointer focus does not override it', () => {
-  const page = setup();
-  const contact = { pointerType: 'touch', clientX: 280 };
-  page.event('card', 'pointerenter', contact);
-  assert.equal(page.animations.length, 0);
-  page.event('link', 'pointerdown', contact);
-  page.event('link', 'focus');
-  assert.equal(page.animations.length, 3);
-  assert.equal(page.animations[0].keyframes[1].transform, 'rotate(5deg)');
-  page.event('link', 'pointerdown', { pointerType: 'mouse', clientX: 100 });
-  assert.equal(page.animations.length, 3);
-  page.link.focusVisible = true;
-  page.event('link', 'focus');
-  assert.equal(page.animations.length, 6);
-  assert.equal(page.animations[3].keyframes[1].transform, 'rotate(-5deg)');
+test('hover uses the approach vector and a quicker pass adds momentum', () => {
+  const approach = (x, y, time) => {
+    const page = setup();
+    page.move(x, y);
+    page.advance(time);
+    page.hover(105, 55);
+    page.advance(95);
+    return page.angles();
+  };
+  const horizontal = approach(65, 55, 45);
+  const vertical = approach(105, 15, 45);
+  const diagonal = approach(65, 15, 45);
+  assert.ok(horizontal[0] < 0);
+  assert.equal(horizontal[2], 0);
+  assert.equal(vertical[0], 0);
+  assert.ok(vertical[2] < 0);
+  assert.ok(diagonal[0] < 0 && diagonal[2] < 0);
+  assert.ok(Math.abs(approach(65, 55, 10)[0]) > Math.abs(horizontal[0]));
 });
 
-test('opposite-side re-entry restarts smoothly from the current board and wire positions', () => {
+test('touch uses the contact position and leaves native link activation alone', () => {
   const page = setup();
-  page.event('card', 'pointerenter', { pointerType: 'mouse', clientX: 100 });
-  const transform = 'matrix(0.999, -0.035, 0.035, 0.999, 0, 0)';
-  [page.link, ...page.wires].forEach(target => { target.transform = transform; });
-  page.event('card', 'pointerenter', { pointerType: 'mouse', clientX: 300 });
-  assert.ok(page.animations.slice(0, 3).every(animation => animation.cancelled));
-  assert.ok(page.animations.slice(3).every(animation => animation.keyframes[0].transform === transform));
-  assert.equal(page.animations[3].keyframes[1].transform, 'rotate(5deg)');
+  page.event('link', 'pointerenter', { pointerType: 'touch', clientX: 200, clientY: 245 });
+  page.event('link', 'pointerdown', { pointerType: 'touch', isPrimary: false, clientX: 200, clientY: 245 });
+  page.event('link', 'pointerdown', { pointerType: 'mouse', clientX: 200, clientY: 245 });
+  assert.equal(page.frames.size, 0);
+  page.tap(200, 245);
+  page.event('link', 'focus');
+  page.advance(95);
+  const [roll, yaw, pitch] = page.angles();
+  assert.equal(roll, 0);
+  assert.equal(yaw, 0);
+  assert.ok(pitch > 0);
+
+  const top = setup();
+  top.tap(200, 55);
+  top.advance(95);
+  assert.ok(top.angles()[2] < 0);
+  assert.ok(pitch > Math.abs(top.angles()[2]));
+  const keyboard = setup();
+  keyboard.link.focusVisible = true;
+  keyboard.event('link', 'focus');
+  keyboard.advance(95);
+  assert.ok(keyboard.angles()[0] < 0);
+});
+
+test('re-entry keeps the current position and adds momentum to the existing swing', () => {
+  const page = setup();
+  page.hover(100, 150);
+  page.advance(95);
+  const before = page.angles();
+  page.hover(300, 150);
+  assert.deepEqual(page.angles(), before);
+  assert.equal(page.frames.size, 1);
+  page.advance(16);
+  assert.ok(page.angles()[0] > before[0]);
+
+  const elapsedInOneFrame = setup();
+  const elapsedInTwoFrames = setup();
+  elapsedInOneFrame.hover(100, 150);
+  elapsedInTwoFrames.hover(100, 150);
+  elapsedInOneFrame.advance(95);
+  elapsedInTwoFrames.advance(40);
+  elapsedInTwoFrames.advance(55);
+  assert.deepEqual(elapsedInOneFrame.angles(), elapsedInTwoFrames.angles());
 });
 
 test('reduced motion, hidden cards and lifecycle cleanup prevent unwanted swings', () => {
   const reduced = setup({ reduced: true });
-  reduced.event('card', 'pointerenter', { pointerType: 'mouse', clientX: 100 });
-  assert.equal(reduced.animations.length, 0);
+  reduced.hover(100, 150);
+  assert.equal(reduced.frames.size, 0);
   for (const [owner, name, value] of [
     ['media', 'change', { matches: true }], ['window', 'pagehide', {}],
     ['document', 'visibilitychange', {}], ['document', 'works-filter-change', {}]
   ]) {
     const page = setup();
-    page.event('card', 'pointerenter', { pointerType: 'mouse', clientX: 300 });
+    page.hover(300, 150);
+    page.advance(95);
+    assert.ok(page.angles());
     if (name === 'visibilitychange') page.document.hidden = true;
     page.event(owner, name, value);
-    assert.ok(page.animations.every(animation => animation.cancelled), name);
+    assert.equal(page.angles(), undefined, name);
+    assert.equal(page.frames.size, 0, name);
   }
   const hidden = setup();
   hidden.card.hidden = true;
-  hidden.event('card', 'pointerenter', { pointerType: 'mouse', clientX: 100 });
-  assert.equal(hidden.animations.length, 0);
+  hidden.hover(100, 150);
+  assert.equal(hidden.frames.size, 0);
 });

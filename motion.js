@@ -209,48 +209,105 @@
   preference.addEventListener('change', () => header.classList.remove('is-scroll-hidden'));
 })();
 
-// Restart a short, damped swing away from the touched side of a wire sign.
+// Transfer contact momentum to a damped swing around the fixed pin.
 (() => {
   const cards = [...document.querySelectorAll('.project-card-wire')];
   if (!cards.length) return;
   const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
-  const active = new Map();
-  const steps = [[0, 0], [.14, -5], [.36, 2.5], [.58, -1], [.8, .3], [1, 0]];
-  const cancel = () => {
-    active.forEach(animations => animations.forEach(animation => animation.cancel()));
-    active.clear();
+  const active = new Set();
+  const damping = 4.8;
+  const frequency = 13;
+  let frame = 0;
+  let previousFrame = 0;
+  let lastPointer;
+
+  const reset = swing => {
+    swing.card.style.removeProperty('--wire-swing');
+    swing.axes.forEach(axis => { axis.angle = axis.velocity = 0; });
+    active.delete(swing);
   };
+  const cancel = () => {
+    window.cancelAnimationFrame(frame);
+    frame = 0;
+    lastPointer = undefined;
+    active.forEach(reset);
+  };
+
+  const animate = timestamp => {
+    const elapsed = Math.max(0, (timestamp - previousFrame) / 1000);
+    previousFrame = timestamp;
+    const decay = Math.exp(-damping * elapsed);
+    const cosine = Math.cos(frequency * elapsed);
+    const sine = Math.sin(frequency * elapsed);
+    for (const swing of active) {
+      // Solving the spring over the elapsed time keeps its motion independent of frame rate.
+      for (const axis of swing.axes) {
+        const { angle, velocity } = axis;
+        const phase = (velocity + damping * angle) / frequency;
+        axis.angle = decay * (angle * cosine + phase * sine);
+        axis.velocity = decay * (velocity * cosine - (damping * phase + frequency * angle) * sine);
+      }
+      if (swing.axes.every(axis => Math.abs(axis.angle) < .04 && Math.abs(axis.velocity) < .45)) {
+        reset(swing);
+        continue;
+      }
+      const [pitch, yaw, roll] = swing.axes.map(axis => axis.angle.toFixed(3));
+      swing.card.style.setProperty('--wire-swing', `perspective(950px) rotateZ(${roll}deg) rotateY(${yaw}deg) rotateX(${pitch}deg)`);
+    }
+    frame = active.size ? window.requestAnimationFrame(animate) : 0;
+  };
+
+  document.addEventListener('pointermove', event => {
+    if (event.pointerType !== 'mouse' || preference.matches) return;
+    lastPointer = { x: event.clientX, y: event.clientY, time: event.timeStamp };
+  }, { passive: true });
+
   for (const card of cards) {
     const link = card.querySelector('.project-link');
-    if (!link?.animate) continue;
-    const targets = [link, ...card.querySelectorAll('.card-wire')];
+    if (!link) continue;
+    const swing = { card, axes: [0, 0, 0].map(() => ({ angle: 0, velocity: 0 })) };
     const start = event => {
       if (preference.matches || document.hidden || card.hidden) return;
-      let animations = [];
-      try {
-        // Read the stationary card so an ongoing swing cannot flip the contact side.
-        const rect = card.getBoundingClientRect();
-        const direction = event && event.clientX > rect.left + rect.width / 2 ? -1 : 1;
-        const initial = targets.map(target => getComputedStyle(target).transform);
-        active.get(card)?.forEach(animation => animation.cancel());
-        targets.forEach((target, index) => {
-          animations.push(target.animate(steps.map(([offset, angle]) => ({
-            offset, transform: offset === 0 ? initial[index] : `rotate(${angle * direction}deg)`, easing: 'ease-in-out'
-          })), { duration: 1400, iterations: 1 }));
-        });
-        active.set(card, animations);
-        Promise.allSettled(animations.map(animation => animation.finished)).then(() => {
-          if (active.get(card) === animations) active.delete(card);
-        });
-      } catch {
-        animations.forEach(animation => animation.cancel());
-        active.get(card)?.forEach(animation => animation.cancel());
-        active.delete(card);
+      let x = 1;
+      let y = 0;
+      let strength = .55;
+      if (event) {
+        const rect = link.getBoundingClientRect();
+        if (!rect.width || !rect.height) return;
+        const horizontal = (event.clientX - rect.left) / rect.width;
+        const vertical = (event.clientY - rect.top) / rect.height;
+        // A direct tap pushes inward from its contact point. Lower hits have more leverage.
+        x = 1 - 2 * horizontal;
+        y = 1 - 2 * vertical;
+        if (Math.hypot(x, y) < .1) { x = 0; y = 1; }
+        strength = .55 + .4 * Math.max(0, Math.min(1, vertical));
+        if (event.pointerType === 'mouse' && lastPointer) {
+          const time = event.timeStamp - lastPointer.time;
+          const dx = event.clientX - lastPointer.x;
+          const dy = event.clientY - lastPointer.y;
+          const distance = Math.hypot(dx, dy);
+          if (time >= 0 && time < 120 && distance >= 2) {
+            x = dx;
+            y = dy;
+            strength *= Math.min(1.2, .65 + .45 * distance / Math.max(time, 8));
+          }
+        }
+      }
+      const scale = strength / Math.hypot(x, y);
+      const impulses = [-140 * y, -94 * x, -92 * x];
+      swing.axes.forEach((axis, index) => {
+        const limit = index === 0 ? 150 : 100;
+        axis.velocity = Math.max(-limit, Math.min(limit, axis.velocity + impulses[index] * scale));
+      });
+      active.add(swing);
+      if (!frame) {
+        previousFrame = performance.now();
+        frame = window.requestAnimationFrame(animate);
       }
     };
-    // The stationary article prevents its moving edges from retriggering hover.
-    card.addEventListener('pointerenter', event => { if (event.pointerType !== 'touch') start(event); });
-    link.addEventListener('pointerdown', event => { if (event.pointerType !== 'mouse') start(event); });
+    // The link stays in place, so moving edges cannot retrigger hover or move the tap target.
+    link.addEventListener('pointerenter', event => { if (event.pointerType === 'mouse') start(event); });
+    link.addEventListener('pointerdown', event => { if (event.isPrimary && event.pointerType !== 'mouse') start(event); });
     // Pointer-generated focus must not replace the direction chosen by the contact.
     link.addEventListener('focus', () => { if (link.matches(':focus-visible')) start(); });
   }
