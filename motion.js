@@ -215,14 +215,17 @@
   if (!cards.length) return;
   const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
   const active = new Set();
-  const damping = 4.8;
-  const frequency = 13;
+  const properties = ['--wire-swing', '--wire-shadow', '--wire-shadow-filter'];
+  const springs = [
+    { frequency: 7.9, damping: 2, limit: 4, impulse: 34 }, // Pitch
+    { frequency: 9.5, damping: 2.5, limit: 2.3, impulse: 19 }, // Yaw
+    { frequency: 6.4, damping: 1.45, limit: 5.4, impulse: 36 } // Roll
+  ];
   let frame = 0;
-  let previousFrame = 0;
   let lastPointer;
 
   const reset = swing => {
-    swing.card.style.removeProperty('--wire-swing');
+    properties.forEach(property => swing.card.style.removeProperty(property));
     swing.axes.forEach(axis => { axis.angle = axis.velocity = 0; });
     active.delete(swing);
   };
@@ -233,26 +236,61 @@
     active.forEach(reset);
   };
 
+  const advance = (swing, timestamp) => {
+    const elapsed = Math.max(0, (timestamp - swing.updatedAt) / 1000);
+    swing.updatedAt = Math.max(swing.updatedAt, timestamp);
+    // Solve each axis over the elapsed time, independent of frame rate.
+    for (const axis of swing.axes) {
+      const { angle, velocity, damping, frequency } = axis;
+      const decay = Math.exp(-damping * elapsed);
+      const cosine = Math.cos(frequency * elapsed);
+      const sine = Math.sin(frequency * elapsed);
+      const phase = (velocity + damping * angle) / frequency;
+      axis.angle = decay * (angle * cosine + phase * sine);
+      axis.velocity = decay * (velocity * cosine - (damping * phase + frequency * angle) * sine);
+    }
+  };
+
+  const draw = swing => {
+    const [pitch, yaw, roll] = swing.axes.map(axis => axis.angle);
+    const [pitchRad, yawRad, rollRad] = [pitch, yaw, roll].map(angle => angle * Math.PI / 180);
+    const [sinPitch, sinYaw, sinRoll] = [pitchRad, yawRad, rollRad].map(Math.sin);
+    const [cosPitch, cosYaw, cosRoll] = [pitchRad, yawRad, rollRad].map(Math.cos);
+    const style = swing.card.style;
+    style.setProperty(properties[0], `perspective(950px) rotateZ(${roll.toFixed(3)}deg) rotateY(${yaw.toFixed(3)}deg) rotateX(${pitch.toFixed(3)}deg)`);
+
+    // Project the board's rotated x and y axes onto the wall along the same upper-left light.
+    const lightX = .34;
+    const lightY = .44;
+    const restDepth = 28;
+    const horizontalDepth = -sinYaw;
+    const verticalDepth = sinPitch * cosYaw;
+    const verticalTurn = sinPitch * sinYaw;
+    const projection = [
+      cosRoll * cosYaw + lightX * horizontalDepth,
+      sinRoll * cosYaw + lightY * horizontalDepth,
+      cosRoll * verticalTurn - sinRoll * cosPitch + lightX * verticalDepth,
+      sinRoll * verticalTurn + cosRoll * cosPitch + lightY * verticalDepth,
+      lightX * restDepth,
+      lightY * restDepth
+    ];
+    style.setProperty(properties[1], `matrix(${projection.map(value => value.toFixed(5)).join(', ')})`);
+
+    // Use the board's center for the penumbra as the lower edge moves away from the wall.
+    const depthDelta = verticalDepth * swing.centerFromPin;
+    const blur = Math.max(4, Math.min(16, 8 + depthDelta * .32));
+    const opacity = Math.max(.34, Math.min(.72, .58 - depthDelta * .009));
+    style.setProperty(properties[2], `blur(${blur.toFixed(2)}px) opacity(${opacity.toFixed(3)})`);
+  };
+
   const animate = timestamp => {
-    const elapsed = Math.max(0, (timestamp - previousFrame) / 1000);
-    previousFrame = timestamp;
-    const decay = Math.exp(-damping * elapsed);
-    const cosine = Math.cos(frequency * elapsed);
-    const sine = Math.sin(frequency * elapsed);
     for (const swing of active) {
-      // Solving the spring over the elapsed time keeps its motion independent of frame rate.
-      for (const axis of swing.axes) {
-        const { angle, velocity } = axis;
-        const phase = (velocity + damping * angle) / frequency;
-        axis.angle = decay * (angle * cosine + phase * sine);
-        axis.velocity = decay * (velocity * cosine - (damping * phase + frequency * angle) * sine);
-      }
-      if (swing.axes.every(axis => Math.abs(axis.angle) < .04 && Math.abs(axis.velocity) < .45)) {
+      advance(swing, timestamp);
+      if (swing.axes.every(axis => Math.hypot(axis.angle, (axis.velocity + axis.damping * axis.angle) / axis.frequency) < .015)) {
         reset(swing);
         continue;
       }
-      const [pitch, yaw, roll] = swing.axes.map(axis => axis.angle.toFixed(3));
-      swing.card.style.setProperty('--wire-swing', `perspective(950px) rotateZ(${roll}deg) rotateY(${yaw}deg) rotateX(${pitch}deg)`);
+      draw(swing);
     }
     frame = active.size ? window.requestAnimationFrame(animate) : 0;
   };
@@ -265,7 +303,7 @@
   for (const card of cards) {
     const link = card.querySelector('.project-link');
     if (!link) continue;
-    const swing = { card, axes: [0, 0, 0].map(() => ({ angle: 0, velocity: 0 })) };
+    const swing = { card, axes: springs.map(spring => ({ ...spring, angle: 0, velocity: 0 })) };
     const start = event => {
       if (preference.matches || document.hidden || card.hidden) return;
       let x = 1;
@@ -286,6 +324,8 @@
           const dx = event.clientX - lastPointer.x;
           const dy = event.clientY - lastPointer.y;
           const distance = Math.hypot(dx, dy);
+          // Scrolling under a stationary mouse can also produce pointerenter.
+          if (distance === 0) return;
           if (time >= 0 && time < 120 && distance >= 2) {
             x = dx;
             y = dy;
@@ -293,17 +333,21 @@
           }
         }
       }
+      const now = performance.now();
+      if (active.has(swing)) advance(swing, now);
+      else swing.updatedAt = now;
+      swing.centerFromPin = link.offsetTop + link.offsetHeight / 2 - 7;
       const scale = strength / Math.hypot(x, y);
-      const impulses = [-140 * y, -94 * x, -92 * x];
+      const components = [-y, -x, -x];
       swing.axes.forEach((axis, index) => {
-        const limit = index === 0 ? 150 : 100;
-        axis.velocity = Math.max(-limit, Math.min(limit, axis.velocity + impulses[index] * scale));
+        // Limit the swing's amplitude after repeated hits while keeping its current angle.
+        const { angle, velocity, frequency, damping, limit, impulse } = axis;
+        const allowedSpeed = frequency * Math.sqrt(Math.max(0, limit ** 2 - angle ** 2));
+        const phaseSpeed = velocity + damping * angle + impulse * components[index] * scale;
+        axis.velocity = Math.max(-allowedSpeed, Math.min(allowedSpeed, phaseSpeed)) - damping * angle;
       });
       active.add(swing);
-      if (!frame) {
-        previousFrame = performance.now();
-        frame = window.requestAnimationFrame(animate);
-      }
+      if (!frame) frame = window.requestAnimationFrame(animate);
     };
     // The link stays in place, so moving edges cannot retrigger hover or move the tap target.
     link.addEventListener('pointerenter', event => { if (event.pointerType === 'mouse') start(event); });

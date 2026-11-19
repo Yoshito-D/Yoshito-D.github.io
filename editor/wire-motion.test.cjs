@@ -13,9 +13,10 @@ function setup({ reduced = false } = {}) {
   const frames = new Map();
   let nextFrame = 0;
   let time = 0;
-  let transform;
+  const styles = new Map();
   const link = {
     ...events('link'), focusVisible: false,
+    offsetTop: 78, offsetHeight: 200,
     matches() { return this.focusVisible; },
     getBoundingClientRect: () => ({ left: 100, top: 50, width: 200, height: 200 })
   };
@@ -23,8 +24,8 @@ function setup({ reduced = false } = {}) {
     hidden: false,
     querySelector: () => link,
     style: {
-      setProperty(_name, value) { transform = value; },
-      removeProperty() { transform = undefined; }
+      setProperty(name, value) { styles.set(name, value); },
+      removeProperty(name) { styles.delete(name); }
     }
   };
   const preference = { ...events('media'), matches: reduced };
@@ -41,8 +42,11 @@ function setup({ reduced = false } = {}) {
     }
   });
   return {
-    frames, link, card, document,
-    angles() { return transform && [...transform.matchAll(/rotate([XYZ])\(([-.\d]+)deg\)/g)].map(match => Number(match[2])); },
+    frames, link, card, document, styles,
+    angles() {
+      const transform = styles.get('--wire-swing');
+      return transform && [...transform.matchAll(/rotate([XYZ])\(([-.\d]+)deg\)/g)].map(match => Number(match[2]));
+    },
     advance(milliseconds) {
       time += milliseconds;
       const pending = [...frames.values()];
@@ -56,20 +60,26 @@ function setup({ reduced = false } = {}) {
   };
 }
 
-test('left and right contacts swing away, then overshoot and settle', () => {
+test('left and right contacts swing away, then make several diminishing passes before settling', () => {
   for (const [x, sign] of [[100, -1], [300, 1]]) {
     const page = setup();
     page.hover(x, 150);
-    page.advance(95);
+    page.advance(210);
     const [roll, yaw, pitch] = page.angles();
     assert.equal(Math.sign(roll), sign);
     assert.equal(Math.sign(yaw), sign);
     assert.equal(pitch, 0);
-    page.advance(250);
-    assert.equal(Math.sign(page.angles()[0]), -sign);
-    assert.ok(Math.abs(page.angles()[0]) < Math.abs(roll));
-    page.advance(1500);
-    assert.equal(page.angles(), undefined);
+    let previous = roll;
+    for (let rebound = 0; rebound < 5; rebound++) {
+      page.advance(490);
+      const [next] = page.angles();
+      assert.equal(Math.sign(next), -Math.sign(previous));
+      const ratio = Math.abs(next / previous);
+      assert.ok(ratio > .4 && ratio < .65, `rebound retained ${ratio} of the previous peak`);
+      previous = next;
+    }
+    page.advance(2500);
+    assert.equal(page.styles.size, 0);
     assert.equal(page.frames.size, 0);
   }
 });
@@ -92,6 +102,12 @@ test('hover uses the approach vector and a quicker pass adds momentum', () => {
   assert.ok(vertical[2] < 0);
   assert.ok(diagonal[0] < 0 && diagonal[2] < 0);
   assert.ok(Math.abs(approach(65, 55, 10)[0]) > Math.abs(horizontal[0]));
+
+  const stationary = setup();
+  stationary.move(105, 55);
+  stationary.advance(150);
+  stationary.hover(105, 55);
+  assert.equal(stationary.frames.size, 0);
 });
 
 test('touch uses the contact position and leaves native link activation alone', () => {
@@ -120,10 +136,26 @@ test('touch uses the contact position and leaves native link activation alone', 
   assert.ok(keyboard.angles()[0] < 0);
 });
 
+test('pitch projects the shadow along the light direction and adjusts its softness', () => {
+  for (const [contactY, farther] of [[55, false], [245, true]]) {
+    const page = setup();
+    page.tap(200, contactY);
+    page.advance(175);
+    const shadow = page.styles.get('--wire-shadow').slice(7, -1).split(', ').map(Number);
+    const [blur, opacity] = page.styles.get('--wire-shadow-filter').match(/[\d.]+/g).map(Number);
+    const [, , shear, stretch, offsetX, offsetY] = shadow;
+    assert.equal(shear > 0, farther);
+    assert.equal(stretch > 1, farther);
+    assert.ok(offsetX > 0 && offsetY > 0);
+    assert.equal(blur > 8, farther);
+    assert.equal(opacity < .58, farther);
+  }
+});
+
 test('re-entry keeps the current position and adds momentum to the existing swing', () => {
   const page = setup();
   page.hover(100, 150);
-  page.advance(95);
+  page.advance(210);
   const before = page.angles();
   page.hover(300, 150);
   assert.deepEqual(page.angles(), before);
@@ -139,6 +171,7 @@ test('re-entry keeps the current position and adds momentum to the existing swin
   elapsedInTwoFrames.advance(40);
   elapsedInTwoFrames.advance(55);
   assert.deepEqual(elapsedInOneFrame.angles(), elapsedInTwoFrames.angles());
+  assert.deepEqual(elapsedInOneFrame.styles, elapsedInTwoFrames.styles);
 });
 
 test('reduced motion, hidden cards and lifecycle cleanup prevent unwanted swings', () => {
@@ -155,7 +188,7 @@ test('reduced motion, hidden cards and lifecycle cleanup prevent unwanted swings
     assert.ok(page.angles());
     if (name === 'visibilitychange') page.document.hidden = true;
     page.event(owner, name, value);
-    assert.equal(page.angles(), undefined, name);
+    assert.equal(page.styles.size, 0, name);
     assert.equal(page.frames.size, 0, name);
   }
   const hidden = setup();
