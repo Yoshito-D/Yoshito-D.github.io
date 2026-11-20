@@ -164,7 +164,6 @@ function renderSite(content) {
   pages.set('index.html', shell(content, 'プロフィール', `<main id="main">
 <section id="about" class="profile-section" aria-labelledby="profile-title">
   <div><p class="reading" data-motion>${escape(profile.reading)}</p><h1 id="profile-title" data-motion>${escape(profile.name)}</h1><p class="role" data-motion>${escape(profile.role)}</p>
-    <a class="primary-link" data-motion href="${featured.length ? '#works' : 'works.html'}">${featured.length ? '代表作品を見る' : '作品一覧を見る'} <span class="link-arrow" aria-hidden="true">→</span></a>
     ${toolIcons ? `<div class="profile-tools" data-motion><p class="tools-label">使用ツール</p><ul class="tool-icons" aria-label="使用ツール">${toolIcons}</ul></div>` : ''}
   </div>
   <div><p class="profile-description" data-motion>${textLines(profile.description)}</p><dl class="profile" data-motion>${information}</dl></div>
