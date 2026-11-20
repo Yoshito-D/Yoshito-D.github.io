@@ -365,15 +365,7 @@
 (() => {
   const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
   if (preference.matches) return;
-  document.querySelectorAll('.profile-section .reading, .profile-section h1').forEach((element) => element.setAttribute('data-motion', ''));
-  document.querySelectorAll('.profile-section .role').forEach((element) => {
-    element.setAttribute('data-motion', '');
-  });
-  document.querySelectorAll('.profile-section > div + div').forEach((element) => {
-    element.setAttribute('data-motion', '');
-  });
-
-  const targets = [...document.querySelectorAll('[data-motion], .profile-section .eyebrow, .back-link, .all-works-link, .section-heading, .project-card, .year-group > h3, .work-category > h2, .detail > h1, .detail-media, .detail-section, footer')];
+  const targets = [...document.querySelectorAll('[data-motion], .section-heading, .project-card, .year-group > h3, .work-category > h2, .detail > h1, .detail-media, .detail-section, footer')];
   const grids = [...document.querySelectorAll('.featured-grid')];
   let active = true;
   let frame = 0;

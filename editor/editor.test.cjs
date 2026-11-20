@@ -122,7 +122,7 @@ test('introduction video URLs render only on detail pages and reject unsafe link
   assert.ok(!pages.get('works.html').includes('detail-video-section'));
   assert.ok(!pages.get('index.html').includes('detail-video-section'));
   const other = content.projects[1];
-  assert.ok(pages.get(`projects/${other.id}.html`).includes('class="detail-video-empty">準備中'));
+  assert.ok(pages.get(`projects/${other.id}.html`).includes('class="detail-video-empty">作品紹介動画は準備中'));
   for (const videoLink of ['javascript:alert(1)', 'data:text/html,test', 'ftp://example.com/video', 'https://name:secret@example.com/video', 'not a URL']) {
     assert.throws(() => validateContent({ ...content, projects: [{ ...project, videoLink }] }), /作品紹介動画リンク/);
   }

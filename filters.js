@@ -30,7 +30,6 @@
       });
     });
     buttons.forEach(button => button.setAttribute('aria-pressed', String(selected.has(button.dataset.tag))));
-    reset.setAttribute('aria-pressed', String(selected.size === 0));
     count.textContent = visible + ' / ' + cards.length + '作品を表示';
     empty.hidden = visible !== 0;
     document.dispatchEvent(new Event("works-filter-change"));

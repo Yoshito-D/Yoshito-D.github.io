@@ -3,7 +3,7 @@ const path = require('node:path');
 
 const ROOT = path.resolve(__dirname, '../..');
 const CONTENT = 'site-content.json';
-const VERSION = '20261119-card-shadow';
+const VERSION = '20261120-portfolio-ui';
 const DEFAULT_AURA = Object.freeze({ color: '#66c0f4', accentColor: '#2a475e', saturation: 100, brightness: 40, speed: 70 });
 const INITIAL_DATE = '2026-10-05';
 const today = () => new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Tokyo', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
@@ -138,14 +138,14 @@ function shell(content, title, body, detail = false, filters = false, updatedAt 
   const shareUrl = new URL(pagePath, siteUrl).href;
   const imageUrl = shareImage ? new URL(shareImage.src, siteUrl).href : '';
   const metadata = `<meta name="description" content="${escape(description)}"><meta property="og:type" content="website"><meta property="og:locale" content="ja_JP"><meta property="og:site_name" content="${escape(pageName)} Portfolio"><meta property="og:title" content="${escape(shareTitle)}"><meta property="og:description" content="${escape(description)}"><meta property="og:url" content="${escape(shareUrl)}">${imageUrl ? `<meta property="og:image" content="${escape(imageUrl)}"><meta property="og:image:alt" content="GALAXY RACINGのゲーム画面">` : ''}<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="${escape(shareTitle)}"><meta name="twitter:description" content="${escape(description)}">${imageUrl ? `<meta name="twitter:image" content="${escape(imageUrl)}"><meta name="twitter:image:alt" content="GALAXY RACINGのゲーム画面">` : ''}`;
-  return `<!DOCTYPE html>\n<html lang="ja"><head>${metadata}<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#171a21"><title>${escape(content.profile.name)} | ${escape(title)}</title><link rel="stylesheet" href="${prefix}styles.css?v=${VERSION}">${detail ? `<script src="../gallery.js?v=${VERSION}" defer></script>` : `<script src="${prefix}preview.js?v=20261005-mobile-preview" defer></script>`}<script src="${prefix}motion.js?v=${VERSION}" defer></script>${filters ? '<script src="filters.js?v=20261002-tag-and" defer></script>' : ''}</head><body data-aura="${escape(JSON.stringify(content.aura))}" style="${auraStyle(content.aura)};--desktop-columns:${content.desktopColumns}"><a class="skip-link" href="#main">本文へ移動</a><header class="site-header"><a class="brand" href="${title === 'プロフィール' ? '#' : home}" aria-label="トップへ">Portfolio</a><nav aria-label="メインナビゲーション"><a href="${title === 'プロフィール' ? '#about' : `${home}#about`}"${title === 'プロフィール' ? ' aria-current="page"' : ''}>プロフィール</a><a href="${works}"${filters ? ' aria-current="page"' : detail ? ' aria-current="location"' : ''}>作品一覧</a></nav></header>${body}<footer><a href="#">ページの先頭へ <span class="link-arrow" aria-hidden="true">↑</span></a>${updateLabel(updatedAt, false)}</footer></body></html>\n`;
+  return `<!DOCTYPE html>\n<html lang="ja"><head>${metadata}<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#10171e"><title>${escape(content.profile.name)} | ${escape(title)}</title><link rel="stylesheet" href="${prefix}styles.css?v=${VERSION}">${detail ? `<script src="../gallery.js?v=${VERSION}" defer></script>` : `<script src="${prefix}preview.js?v=20261005-mobile-preview" defer></script>`}<script src="${prefix}motion.js?v=${VERSION}" defer></script>${filters ? `<script src="filters.js?v=${VERSION}" defer></script>` : ''}</head><body data-aura="${escape(JSON.stringify(content.aura))}" style="${auraStyle(content.aura)};--desktop-columns:${content.desktopColumns}"><a class="skip-link" href="#main">本文へ移動</a><header class="site-header"><a class="brand" href="${title === 'プロフィール' ? '#' : home}" aria-label="Portfolio トップへ">Portfolio</a><nav aria-label="メインナビゲーション"><a href="${title === 'プロフィール' ? '#about' : `${home}#about`}"${title === 'プロフィール' ? ' aria-current="page"' : ''}>プロフィール</a><a href="${works}"${filters ? ' aria-current="page"' : detail ? ' aria-current="location"' : ''}>作品一覧</a></nav></header>${body}<footer><a href="#">ページの先頭へ <span class="link-arrow" aria-hidden="true">↑</span></a>${updateLabel(updatedAt, false)}</footer></body></html>\n`;
 }
 
 function card(project, heading = 'h3', cardStyle = 'standard') {
   const wire = cardStyle === 'wire';
   const hanger = wire ? '<span class="card-pin" aria-hidden="true"></span><div class="card-hanger" aria-hidden="true"><span class="card-wire card-wire-left"></span><span class="card-wire card-wire-right"></span></div>' : '';
   const eyelets = wire ? '<span class="card-eyelet card-eyelet-left" aria-hidden="true"></span><span class="card-eyelet card-eyelet-right" aria-hidden="true"></span>' : '';
-  const board = `${eyelets}<div class="empty-media" data-preview="${escape(project.video)}" aria-hidden="true">${project.images[0] ? `<img src="${escape(project.images[0].src)}" alt="" loading="lazy">` : ''}</div><${heading} class="project-title">${escape(project.title)}</${heading}><div class="project-meta">${tagList(project)}${achievements(project)}</div>`;
+  const board = `${eyelets}<div class="empty-media" data-preview="${escape(project.video)}" aria-hidden="true">${project.images[0] ? `<img src="${escape(project.images[0].src)}" alt="" loading="lazy">` : ''}</div><${heading} class="project-title">${escape(project.title)} <span class="link-arrow" aria-hidden="true">→</span></${heading}><div class="project-meta">${tagList(project)}${achievements(project)}</div>`;
   return `<article class="project-card${wire ? ' project-card-wire' : ''}" data-dimension="${escape(project.dimension)}" data-genre="${escape(project.genre)}" data-production="${escape(project.production)}" data-year="${escape(project.year)}">${hanger}<a class="project-link" href="projects/${project.id}.html">${wire ? `<div class="card-board">${board}</div>` : board}</a></article>`;
 }
 
@@ -160,23 +160,55 @@ function renderSite(content) {
   const toolIcons = profile.tools.map(key => { const [name, file, cls] = tools[key]; return `<li><img${cls ? ` class="${cls}"` : ''} src="assets/tools/${file}" alt="${name}" title="${name}" width="48" height="48"></li>`; }).join('');
   const information = [['所属', profile.school], ['卒業予定', profile.graduation], ['趣味', profile.hobby], ['Email', profile.email]].map(([label, value]) => `<div><dt>${label}</dt><dd>${label === 'Email' && value ? `<a class="email-link" href="mailto:${escape(value)}">${escape(value)}</a>` : textLines(value)}</dd></div>`).join('');
   const pages = new Map();
-  pages.set('index.html', shell(content, 'プロフィール', `<main id="main"><section id="about" class="profile-section" aria-labelledby="profile-title"><div><p class="eyebrow">PROFILE</p><p class="reading">${escape(profile.reading)}</p><h1 id="profile-title">${escape(profile.name)}</h1><p class="role">${escape(profile.role)}</p>${toolIcons ? `<div class="profile-tools" data-motion><p class="tools-label">使用ツール</p><ul class="tool-icons" aria-label="使用ツール">${toolIcons}</ul></div>` : ''}</div><div><dl class="profile">${information}</dl><p class="profile-description">${textLines(profile.description)}</p></div></section><section id="works" class="section" aria-labelledby="works-title"><div class="section-heading"><p class="eyebrow">SELECTED WORKS</p><h2 id="works-title">代表作品</h2></div><div class="featured-grid">${projects.filter(project => project.featured).map(project => card(project, 'h3', content.cardStyle)).join('\n')}</div><a class="all-works-link" data-motion href="works.html">作品一覧を見る <span class="link-arrow" aria-hidden="true">→</span></a></section></main>`));
+  const featured = projects.filter(project => project.featured);
+  pages.set('index.html', shell(content, 'プロフィール', `<main id="main">
+<section id="about" class="profile-section" aria-labelledby="profile-title">
+  <div><p class="reading" data-motion>${escape(profile.reading)}</p><h1 id="profile-title" data-motion>${escape(profile.name)}</h1><p class="role" data-motion>${escape(profile.role)}</p>
+    <a class="primary-link" data-motion href="${featured.length ? '#works' : 'works.html'}">${featured.length ? '代表作品を見る' : '作品一覧を見る'} <span class="link-arrow" aria-hidden="true">→</span></a>
+    ${toolIcons ? `<div class="profile-tools" data-motion><p class="tools-label">使用ツール</p><ul class="tool-icons" aria-label="使用ツール">${toolIcons}</ul></div>` : ''}
+  </div>
+  <div><p class="profile-description" data-motion>${textLines(profile.description)}</p><dl class="profile" data-motion>${information}</dl></div>
+</section>
+${featured.length ? `<section id="works" class="section" aria-labelledby="works-title">
+  <div class="section-heading-row"><h2 id="works-title" data-motion>代表作品</h2><a class="all-works-link" data-motion href="works.html">作品一覧を見る <span class="link-arrow" aria-hidden="true">→</span></a></div>
+  <div class="featured-grid">${featured.map(project => card(project, 'h3', content.cardStyle)).join('\n')}</div>
+</section>` : ''}
+</main>`));
   const usedTags = [...new Set(projects.flatMap(tags))];
-  const standardTags = ['個人制作', 'チーム制作', '1年次', '2年次', '3年次', '4年次', '5年次', '6年次', '7年次', '8年次', '9年次', '2D', '3D', 'アクション', 'シューティング', 'パズル'];
-  const allTags = [...standardTags.filter(tag => usedTags.includes(tag)), ...usedTags.filter(tag => !standardTags.includes(tag))];
-  const filter = `<section class="work-filters" aria-label="作品の絞り込み" data-motion hidden><p class="filter-help">選択したタグをすべて含む作品を表示します。</p><div class="filter-tags" role="group" aria-label="絞り込みタグ">${allTags.map(tag => `<button type="button" class="filter-tag" data-tag="${escape(tag)}" aria-pressed="false">${escape(tag)}</button>`).join('')}</div><div class="filter-summary"><button type="button" class="filter-reset">すべて表示</button><p class="filter-count" role="status" aria-live="polite" aria-atomic="true"></p></div></section><p class="filter-empty" hidden>条件に一致する作品はありません。絞り込み条件を変更してください。</p>`;
+  const filterGroups = [
+    ['制作形態', ['個人制作', 'チーム制作']],
+    ['学年', Array.from({ length: 9 }, (_, index) => `${index + 1}年次`)],
+    ['2D・3D', ['2D', '3D']]
+  ];
+  const fixedTags = filterGroups.flatMap(([, group]) => group);
+  const genres = ['アクション', 'シューティング', 'パズル'];
+  filterGroups.push(['ジャンル・その他', [...genres, ...usedTags.filter(tag => !fixedTags.includes(tag) && !genres.includes(tag))]]);
+  const visibleFilterGroups = filterGroups.map(([label, group]) => [label, group.filter(tag => usedTags.includes(tag))]).filter(([, group]) => group.length);
+  const filter = usedTags.length ? `<section class="work-filters" aria-labelledby="filter-title" data-motion hidden>
+  <h2 id="filter-title">タグで絞り込む</h2><p class="filter-help">選択したタグをすべて含む作品を表示します。</p>
+  <div class="filter-groups">${visibleFilterGroups.map(([label, group]) => `<div class="filter-group" role="group" aria-label="${label}"><p class="filter-label" aria-hidden="true">${label}</p><div class="filter-tags">${group.map(tag => `<button type="button" class="filter-tag" data-tag="${escape(tag)}" aria-pressed="false">${escape(tag)}</button>`).join('')}</div></div>`).join('')}</div>
+  <div class="filter-summary"><p class="filter-count" role="status" aria-live="polite" aria-atomic="true"></p><button type="button" class="filter-reset">すべて表示</button></div>
+</section><p class="filter-empty" data-motion hidden>条件に一致する作品はありません。絞り込み条件を変更してください。</p>` : '';
   const categories = ['個人制作', 'チーム制作'].map((production, index) => {
     const group = projects.filter(project => project.production === production);
     if (!group.length) return '';
     const years = [...new Set(group.map(project => project.year))].sort((a, b) => Number(b[0]) - Number(a[0]));
     return `<section class="work-category" aria-labelledby="category-${index}"><h2 id="category-${index}">${production}</h2>${years.map(year => `<section class="year-group"><h3>${year}</h3><div class="featured-grid">${group.filter(project => project.year === year).map(project => card(project, 'h4', content.cardStyle)).join('\n')}</div></section>`).join('')}</section>`;
   }).join('');
-  pages.set('works.html', shell(content, '作品一覧', `<main id="main"><section class="section"><div class="section-heading"><p class="eyebrow">WORKS</p><h1>作品一覧</h1><p class="profile-description">${textLines(content.worksIntro)}</p></div>${filter}${categories}</section></main>`, false, true));
+  pages.set('works.html', shell(content, '作品一覧', `<main id="main"><section class="section"><div class="section-heading"><h1>作品一覧</h1>${content.worksIntro ? `<p class="works-intro">${textLines(content.worksIntro)}</p>` : ''}</div>${filter}${categories}</section></main>`, false, true));
   for (const project of projects) {
     const info = [['開発環境', project.environment], ['担当', project.role], ['制作人数', project.teamSize], ['開発期間', project.duration]].map(([label, value]) => `<div><dt>${label}</dt><dd>${textLines(value)}</dd></div>`).join('');
     const media = gallery(project);
-    const videoLink = `<div class="detail-video-section">${project.videoLink ? `<a class="detail-video-link" href="${escape(project.videoLink)}" target="_blank" rel="noopener noreferrer"><svg class="video-play-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10 7.5 17 12l-7 4.5Z" fill="currentColor"/></svg>作品紹介動画を見る <span class="link-arrow" aria-hidden="true">↗</span><span class="sr-only">（新しいタブで開きます）</span></a>` : '<p class="detail-video-empty">準備中</p>'}</div>`;
-    pages.set(`projects/${project.id}.html`, shell(content, project.title, `<main id="main" class="detail"><a class="back-link" data-motion href="../works.html"><span class="link-arrow" aria-hidden="true">←</span> 作品一覧へ</a><h1>${escape(project.title)}</h1><div class="detail-topline" data-motion><div class="detail-tags">${tagList(project)}</div>${videoLink}</div>${media}<section class="detail-section"><h2>作品概要</h2>${paragraphs(project.description)}<dl class="profile">${info}</dl></section>${project.achievements.length ? `<section class="detail-section"><h2>実績</h2>${achievements(project)}</section>` : ''}<section class="detail-section"><h2>こだわり・工夫・エピソード</h2>${project.implementation ? `<div class="implementation-copy">${paragraphs(project.implementation)}</div>` : '<div class="empty-content"></div>'}</section></main>`, true, false, project.updatedAt, `projects/${project.id}.html`));
+    const videoLink = `<div class="detail-video-section">${project.videoLink ? `<a class="detail-video-link" href="${escape(project.videoLink)}" target="_blank" rel="noopener noreferrer"><svg class="video-play-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10 7.5 17 12l-7 4.5Z" fill="currentColor"/></svg>作品紹介動画を見る <span class="link-arrow" aria-hidden="true">↗</span><span class="sr-only">（新しいタブで開きます）</span></a>` : '<p class="detail-video-empty">作品紹介動画は準備中</p>'}</div>`;
+    pages.set(`projects/${project.id}.html`, shell(content, project.title, `<main id="main" class="detail">
+<a class="back-link" data-motion href="../works.html"><span class="link-arrow" aria-hidden="true">←</span> 作品一覧へ</a>
+<h1>${escape(project.title)}</h1>
+<div class="detail-topline" data-motion>${tagList(project)}${videoLink}</div>
+<div class="detail-layout">${media}<section class="detail-facts" data-motion><h2>制作情報</h2><dl class="profile">${info}</dl></section></div>
+${project.description ? `<section class="detail-section"><h2>作品概要</h2>${paragraphs(project.description)}</section>` : ''}
+${project.achievements.length ? `<section class="detail-section"><h2>実績</h2>${achievements(project)}</section>` : ''}
+${project.implementation ? `<section class="detail-section"><h2>こだわり・工夫・エピソード</h2>${paragraphs(project.implementation)}</section>` : ''}
+</main>`, true, false, project.updatedAt, `projects/${project.id}.html`));
   }
   return pages;
 }
