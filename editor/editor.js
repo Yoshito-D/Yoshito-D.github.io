@@ -128,6 +128,10 @@
     $('#clear-video').disabled = !project.video || busy;
     $('#video-status').textContent = project.video ? 'プレビュー動画を設定済みです。作品カードで確認できます。' : '動画は未設定です。';
   }
+  function renderUpdatedStatus() {
+    const updated = currentProject()?.updatedAt || content.pageUpdatedAt.profile;
+    $('#updated-status').textContent = selected === AURA_VIEW ? '全ページ共通の背景設定' : `更新日：${updated.replace(/-/g, '/')}（保存時に自動更新）`;
+  }
   function choose(id, changePage = true) {
     selected = id;
     const project = currentProject();
@@ -137,8 +141,7 @@
     $('#project-fields').hidden = !project;
     $('#form-title').textContent = aura ? '背景・オーラ' : project ? project.title || '新しい作品' : 'プロフィール';
     $('#form-eyebrow').textContent = aura ? 'BACKGROUND' : project ? 'PROJECT' : 'PROFILE';
-    const updated = project?.updatedAt || content.pageUpdatedAt.profile;
-    $('#updated-status').textContent = aura ? '全ページ共通の背景設定' : `更新日：${updated.replace(/-/g, '/')}（保存時に自動更新）`;
+    renderUpdatedStatus();
     for (const field of form.querySelectorAll('[name]')) {
       if (field.name === 'tool') { field.checked = content.profile.tools.includes(field.value); field.disabled = Boolean(project) || aura || busy; continue; }
       const [section, key] = field.name.split('.');
@@ -314,6 +317,7 @@
       const result = await api('save', { content, revision });
       content = result.content; revision = result.revision;
       savedFingerprint = fingerprint(); pendingPublish = !result.published;
+      renderUpdatedStatus();
       notice(result.message, !result.published, true);
       frame.src = `/preview/${page}?v=${++inputVersion}`;
     } catch (cause) { notice(cause.message, true, true); }

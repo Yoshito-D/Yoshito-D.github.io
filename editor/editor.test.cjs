@@ -4,7 +4,7 @@ const fs = require('node:fs/promises');
 const os = require('node:os');
 const path = require('node:path');
 const { execFileSync } = require('node:child_process');
-const { DEFAULT_AURA, readContent, validateContent, renderSite, stampUpdates, today } = require('./lib/site.cjs');
+const { ROOT, DEFAULT_AURA, readContent, validateContent, renderSite, stampUpdates, today } = require('./lib/site.cjs');
 const { createEditor } = require('./server.cjs');
 
 test('new tags, text, achievements and images are consistent on all static pages', () => {
@@ -102,6 +102,47 @@ test('dates change only on pages affected by content and cannot be overridden by
   assert.equal(profileOnly.projects[0].updatedAt, '2026-10-01');
   for (const html of renderSite(updated).values()) assert.match(html, /更新日：<time datetime="2026-10-0[15]">2026\/10\/0[15]<\/time>/);
   assert.throws(() => validateContent({ ...saved, pageUpdatedAt: { profile: '2026-02-30' } }), /更新日/);
+});
+
+test('direct generation updates dates for changed content and page assets', async t => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'portfolio-generator-test-'));
+  t.after(async () => {
+    assert.equal(path.dirname(path.resolve(root)), path.resolve(os.tmpdir()));
+    assert.ok(path.basename(root).startsWith('portfolio-generator-test-'));
+    await fs.rm(root, { recursive: true, force: true });
+  });
+  await fs.mkdir(path.join(root, 'editor/lib'), { recursive: true });
+  for (const file of ['editor/generate.cjs', 'editor/lib/site.cjs', 'styles.css', 'motion.js', 'filters.js', 'preview.js', 'gallery.js']) {
+    await fs.copyFile(path.join(ROOT, file), path.join(root, file));
+  }
+  const { renderSite: renderFixture } = require(path.join(root, 'editor/lib/site.cjs'));
+  const saved = validateContent(readContent());
+  const oldDate = '2026-10-01';
+  saved.pageUpdatedAt = { profile: oldDate, works: oldDate };
+  saved.projects.forEach(project => { project.updatedAt = oldDate; });
+  const contentPath = path.join(root, 'site-content.json');
+  const generate = () => execFileSync(process.execPath, ['editor/generate.cjs'], { cwd: root, windowsHide: true });
+  await fs.mkdir(path.join(root, 'projects'));
+  for (const [file, html] of renderFixture(saved)) await fs.writeFile(path.join(root, file), html.replace(/\n/g, '\r\n'));
+  await fs.writeFile(contentPath, JSON.stringify(saved));
+  generate();
+  assert.deepEqual(JSON.parse(await fs.readFile(contentPath, 'utf8')), saved);
+
+  saved.worksIntro = '紹介文を直接更新';
+  await fs.writeFile(contentPath, JSON.stringify(saved));
+  await fs.appendFile(path.join(root, 'gallery.js'), '\n// Updated gallery behavior\n');
+  generate();
+  const date = today();
+  const updated = JSON.parse(await fs.readFile(contentPath, 'utf8'));
+  assert.deepEqual(updated.pageUpdatedAt, { profile: oldDate, works: date });
+  assert.ok(updated.projects.every(project => project.updatedAt === date));
+  const pages = ['works.html', ...updated.projects.map(project => `projects/${project.id}.html`)];
+  for (const file of pages) {
+    const html = await fs.readFile(path.join(root, file), 'utf8');
+    assert.ok(html.includes(`更新日：<time datetime="${date}">${date.replace(/-/g, '/')}</time>`), file);
+  }
+  generate();
+  assert.deepEqual(JSON.parse(await fs.readFile(contentPath, 'utf8')), updated);
 });
 
 test('introduction video URLs render only on detail pages and reject unsafe links', () => {
