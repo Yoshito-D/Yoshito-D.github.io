@@ -18,18 +18,11 @@
       card.hidden = !matches;
       if (matches) visible++;
     }
-    document.querySelectorAll('.year-group, .work-category').forEach(group => {
+    document.querySelectorAll('.work-category').forEach(group => {
       group.hidden = ![...group.querySelectorAll('.project-card')].some(card => !card.hidden);
     });
-    document.querySelectorAll('.featured-grid').forEach(grid => {
-      let rowTop;
-      let position = 0;
-      [...grid.querySelectorAll('.project-card')].filter(card => !card.hidden).forEach(card => {
-        if (card.offsetTop !== rowTop) { rowTop = card.offsetTop; position = 0; }
-        card.style.setProperty('--motion-delay', Math.min(position++, 3) * 100 + 'ms');
-      });
-    });
     buttons.forEach(button => button.setAttribute('aria-pressed', String(selected.has(button.dataset.tag))));
+    reset.setAttribute('aria-disabled', String(selected.size === 0));
     count.textContent = visible + ' / ' + cards.length + '作品を表示';
     empty.hidden = visible !== 0;
     document.dispatchEvent(new Event("works-filter-change"));
@@ -40,7 +33,12 @@
     else selected.add(tag);
     apply();
   }));
-  reset.addEventListener('click', () => { selected.clear(); apply(); });
+  reset.addEventListener('click', () => {
+    if (!selected.size) return;
+    selected.clear();
+    apply();
+  });
+  filters.querySelector('.filter-options').open = window.matchMedia('(min-width: 36rem)').matches;
   apply();
   filters.hidden = false;
 })();

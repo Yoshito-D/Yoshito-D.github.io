@@ -53,6 +53,7 @@
       uniform vec2 resolution;
       uniform float time;
       uniform vec3 backgroundColor;
+      uniform float lightTheme;
       uniform vec3 auraColor;
       uniform vec3 accentColor;
       uniform float saturation;
@@ -90,7 +91,10 @@
                    + auraColor * edges + accentColor * teal;
         float luminance = dot(light, vec3(.2126, .7152, .0722));
         light = max(mix(vec3(luminance), light, saturation), vec3(0.));
-        color += brightness * fade * light;
+        vec3 tint = mix(auraColor, accentColor, clamp(teal * 2., 0., 1.));
+        tint = mix(vec3(dot(tint, vec3(.2126, .7152, .0722))), tint, saturation);
+        float tintStrength = clamp(brightness * fade * (mist + folds + edges) * .20, 0., .25);
+        color = mix(color + brightness * fade * light, mix(color, tint, tintStrength), lightTheme);
         // A tiny, stationary dither keeps dark gradients from forming visible bands.
         color += (fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453) - .5) / 255.;
         gl_FragColor = vec4(color, 1.);
@@ -118,11 +122,13 @@
   const resolution = gl.getUniformLocation(program, 'resolution');
   const time = gl.getUniformLocation(program, 'time');
   const background = gl.getUniformLocation(program, 'backgroundColor');
+  const lightTheme = gl.getUniformLocation(program, 'lightTheme');
   const color = gl.getUniformLocation(program, 'auraColor');
   const accent = gl.getUniformLocation(program, 'accentColor');
   const saturation = gl.getUniformLocation(program, 'saturation');
   const brightness = gl.getUniformLocation(program, 'brightness');
   const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const colorScheme = window.matchMedia('(prefers-color-scheme: light)');
   let frame = 0;
   let previous = 0;
   let elapsed = 18;
@@ -159,7 +165,9 @@
   refresh = () => {
     if (lost) return;
     const rgb = value => new Float32Array(value.slice(1).match(/../g).map(part => parseInt(part, 16) / 255));
-    gl.uniform3fv(background, rgb(getComputedStyle(document.documentElement).getPropertyValue('--bg').trim()));
+    const surface = getComputedStyle(document.documentElement).getPropertyValue('--md-sys-color-surface').trim();
+    gl.uniform3fv(background, rgb(surface || '#111720'));
+    gl.uniform1f(lightTheme, Number(colorScheme.matches));
     gl.uniform3fv(color, rgb(settings.color));
     gl.uniform3fv(accent, rgb(settings.accentColor));
     gl.uniform1f(saturation, settings.saturation / 100);
@@ -175,6 +183,7 @@
   window.addEventListener('resize', resize, { passive: true });
   document.addEventListener('visibilitychange', update);
   preference.addEventListener('change', update);
+  colorScheme.addEventListener('change', refresh);
   resize();
   refresh();
 })();
@@ -365,7 +374,7 @@
 (() => {
   const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
   if (preference.matches) return;
-  const targets = [...document.querySelectorAll('[data-motion], .section-heading, .project-card, .year-group > h3, .work-category > h2, .detail > h1, .detail-media, .detail-section, footer')];
+  const targets = [...document.querySelectorAll('[data-motion], .section-heading, .project-card, .work-category > h2, .detail > h1, .detail-media, .detail-section, footer')];
   const grids = [...document.querySelectorAll('.featured-grid')];
   let active = true;
   let frame = 0;
