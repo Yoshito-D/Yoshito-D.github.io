@@ -504,23 +504,31 @@ footer {
   cursor: pointer;
 }
 .filter-tag {
+  --filter-check-width: .75rem;
+  --filter-check-gap: .375rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: .375rem;
+  gap: var(--filter-check-gap);
   max-width: 100%;
   border-color: var(--md-sys-color-outline);
   overflow-wrap: anywhere;
 }
 .filter-tag::before {
   content: "";
+  box-sizing: border-box;
   flex: none;
-  width: .625rem;
-  height: .375rem;
+  width: var(--filter-check-width);
+  height: .5rem;
   border-bottom: 2px solid currentColor;
   border-left: 2px solid currentColor;
   transform: translateY(-.08rem) rotate(-45deg);
   visibility: hidden;
+}
+/* Reserve room for the check without shifting the unselected label off center. */
+.filter-tag[aria-pressed="false"] > span {
+  position: relative;
+  inset-inline-start: calc((var(--filter-check-width) + var(--filter-check-gap)) / -2);
 }
 .filter-tag[aria-pressed="true"] {
   --control-fill: var(--md-sys-color-secondary-container);
