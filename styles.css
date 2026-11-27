@@ -358,8 +358,15 @@ footer {
 .achievement-list li + li { margin-top: 0.5rem; }
 
 /* The pin and tap area stay fixed while the board and wires swing together. */
-.featured-grid:has(> .project-card-wire) { padding-inline: 0.375rem; }
-.project-card-wire { --wire-suspension: 2.5rem; position: relative; }
+.featured-grid:has(> .project-card-wire) { padding-inline: .375rem; }
+.project-card-wire {
+  --wire-suspension: clamp(1.75rem, 3.2vw, 2.5rem);
+  --wire-inset: 1.5rem;
+  --wire-color: var(--md-sys-color-outline);
+  position: relative;
+}
+.project-card-wire:hover { z-index: 1; }
+.project-card-wire:focus-within { z-index: 2; }
 .card-hanger {
   position: relative;
   z-index: 2;
@@ -371,24 +378,24 @@ footer {
 .card-pin {
   position: absolute;
   z-index: 3;
-  left: calc(50% - 5px);
-  top: 2px;
-  width: 10px;
-  height: 10px;
+  left: calc(50% - 6px);
+  top: 1px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
-  background: var(--md-sys-color-outline);
-  border: 2px solid var(--md-sys-color-outline-variant);
+  background: var(--md-sys-color-surface-container-high);
+  border: 2px solid var(--wire-color);
   pointer-events: none;
 }
 .card-wire {
   position: absolute;
   top: 6px;
-  width: calc(50% - 21px);
-  height: calc(var(--wire-suspension) + 6px);
-  background: var(--md-sys-color-outline);
+  width: calc(50% - var(--wire-inset));
+  height: calc(var(--wire-suspension) + 5px);
+  background: var(--wire-color);
 }
-.card-wire-left { left: 21px; clip-path: polygon(0 100%, 0 96%, 100% 0, 100% 4%); }
-.card-wire-right { right: 21px; clip-path: polygon(0 0, 0 4%, 100% 100%, 100% 96%); }
+.card-wire-left { left: var(--wire-inset); clip-path: polygon(0 100%, 0 calc(100% - 2px), 100% 0, 100% 2px); }
+.card-wire-right { right: var(--wire-inset); clip-path: polygon(0 0, 0 2px, 100% 100%, 100% calc(100% - 2px)); }
 .project-card-wire .project-link {
   position: relative;
   isolation: isolate;
@@ -404,14 +411,14 @@ footer {
   pointer-events: none;
   border-radius: var(--shape-large);
   background: var(--md-sys-color-shadow);
-  opacity: 0.45;
+  opacity: .3;
   transform-origin: 50% calc(7px - var(--wire-suspension));
   transform: var(--wire-shadow, translate(9.52px, 12.32px));
   filter: var(--wire-shadow-filter, blur(8px) opacity(.58));
 }
 .card-board {
   position: relative;
-  padding-top: 1rem;
+  padding-top: 1.25rem;
   pointer-events: none;
   transform: var(--wire-swing, none);
   transform-origin: 50% calc(7px - var(--wire-suspension));
@@ -420,14 +427,14 @@ footer {
   position: absolute;
   z-index: 3;
   top: 4px;
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   background: var(--md-sys-color-surface);
-  border: 2px solid var(--md-sys-color-outline);
+  border: 2px solid var(--wire-color);
 }
-.card-eyelet-left { left: 17px; }
-.card-eyelet-right { right: 17px; }
+.card-eyelet-left { left: calc(var(--wire-inset) - 6px); }
+.card-eyelet-right { right: calc(var(--wire-inset) - 6px); }
 
 .works-page .section-heading { margin-bottom: clamp(1.5rem, 3.5vw, 2.5rem); }
 .works-intro { margin-top: .75rem; max-width: 44rem; overflow-wrap: anywhere; color: var(--md-sys-color-on-surface-variant); }
@@ -615,6 +622,8 @@ footer {
 }
 @media (forced-colors: active) {
   body::before, .background-aura, .profile-identity::before { display: none; }
+  .project-card-wire { --wire-color: CanvasText; }
+  .card-wire { forced-color-adjust: none; }
   .filter-tag[aria-pressed="true"] { border-color: ButtonText; }
   :is(.all-works-link, .detail-video-link, .gallery-arrow) { border: 1px solid currentColor; }
   .site-header nav a::after { background: LinkText; forced-color-adjust: none; }
@@ -628,7 +637,8 @@ footer {
   .motion-pending { opacity: 0; }
   .motion-pending:focus-within { opacity: 1; }
   .motion-enter { animation: content-enter .55s ease backwards; animation-delay: var(--motion-delay, 0ms); }
-  .project-link, .card-board { transition: transform .2s ease, border-color .2s ease, background-color .2s ease; }
+  .project-link { transition: transform .2s ease, border-color .2s ease, background-color .2s ease; }
+  .card-board { transition: border-color .2s ease, background-color .2s ease; }
   .project-card:not(.project-card-wire) .project-link:is(:hover, :focus-visible) { transform: translateY(-4px); }
   :is(.project-link, .all-works-link):is(:hover, :focus-visible) .link-arrow { transform: translateX(3px); }
   .back-link:is(:hover, :focus-visible) .link-arrow { transform: translateX(-3px); }
